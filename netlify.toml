@@ -1,6 +1,7 @@
 [build]
   command = "pnpm build"
   publish = ".next"
+  environment = { SECRETS_SCAN_OMIT_KEYS = "NEXT_PUBLIC_EXCHANGE_RATE_API_URL" }
 
 [[plugins]]
   package = "@netlify/plugin-nextjs"
