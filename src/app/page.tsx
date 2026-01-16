@@ -166,7 +166,7 @@ export default function HomePage() {
           </div>
         </div>
 
-        {/* Admin link (discret) */}
+        {/* Admin link (discreet) */}
         <Link 
           href="/admin" 
           className="absolute top-4 right-4 p-2 text-muted-foreground/30 hover:text-muted-foreground transition-colors"

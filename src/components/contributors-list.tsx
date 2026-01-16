@@ -68,7 +68,7 @@ export function ContributorsList({
       setContributions(data.contributions || [])
     } catch (err) {
       console.error('Error fetching contributions:', err)
-      setError('Impossible de charger les contributions')
+      setError('Unable to load contributions')
     } finally {
       setIsLoading(false)
     }

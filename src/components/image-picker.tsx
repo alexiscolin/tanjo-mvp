@@ -65,7 +65,7 @@ export function ImagePicker({ value, onChange }: ImagePickerProps) {
       }
     } catch (err) {
       console.error('Error fetching images:', err)
-      setError('Erreur de connexion')
+      setError('Connection error')
     } finally {
       setIsLoading(false)
     }

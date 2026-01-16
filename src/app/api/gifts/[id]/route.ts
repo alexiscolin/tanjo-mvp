@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateGift, deleteGift } from '@/lib/google-sheets'
 
-// PUT /api/gifts/[id] - Modifier un cadeau
+// PUT /api/gifts/[id] - Update a gift
 export async function PUT(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
@@ -26,7 +26,7 @@ export async function PUT(
   }
 }
 
-// DELETE /api/gifts/[id] - Supprimer un cadeau
+// DELETE /api/gifts/[id] - Delete a gift
 export async function DELETE(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }

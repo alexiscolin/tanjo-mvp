@@ -137,11 +137,11 @@ export default function AdminPage() {
         fetchGifts()
       } else {
         const data = await response.json()
-        alert(data.error || 'Erreur lors de l\'ajout')
+        alert(data.error || 'Error adding gift')
       }
     } catch (error) {
       console.error('Error adding gift:', error)
-      alert('Erreur lors de l\'ajout')
+      alert('Error adding gift')
     } finally {
       setIsLoading(false)
     }
@@ -172,11 +172,11 @@ export default function AdminPage() {
         fetchGifts()
       } else {
         const data = await response.json()
-        alert(data.error || 'Erreur lors de la modification')
+        alert(data.error || 'Error updating gift')
       }
     } catch (error) {
       console.error('Error updating gift:', error)
-      alert('Erreur lors de la modification')
+      alert('Error updating gift')
     } finally {
       setIsLoading(false)
     }
@@ -197,11 +197,11 @@ export default function AdminPage() {
         fetchGifts()
       } else {
         const data = await response.json()
-        alert(data.error || 'Erreur lors de la suppression')
+        alert(data.error || 'Error deleting gift')
       }
     } catch (error) {
       console.error('Error deleting gift:', error)
-      alert('Erreur lors de la suppression')
+      alert('Error deleting gift')
     } finally {
       setIsLoading(false)
     }

@@ -115,11 +115,11 @@ In your `.env.local`:
 ```env
 GOOGLE_SHEETS_SPREADSHEET_ID=xxx     # The ID in your Sheet URL
 GOOGLE_SHEETS_CLIENT_EMAIL=xxx@xxx.iam.gserviceaccount.com
-GOOGLE_PRIVATE_KEY="-----BEGIN PRIVATE KEY-----\n...\n-----END PRIVATE KEY-----\n"
+GOOGLE_PRIVATE_KEY="your_private_key_here"  # Copy the full key from JSON with \n
 ADMIN_PASSWORD=your_secure_password_here
 ```
 
-> ⚠️ For the private key, keep the `\n` and wrap it in quotes.
+> ⚠️ For the private key, copy the entire key value from the service account JSON file (including the BEGIN/END lines) and wrap it in quotes with literal `\n` characters preserved.
 
 ---
 
