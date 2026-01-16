@@ -14,13 +14,7 @@
 # RESEND_API_KEY (optionnel)
 # NEXT_PUBLIC_EXCHANGE_RATE_API_URL (optionnel)
 
-# Redirections (optionnel)
-[[redirects]]
-  from = "/api/*"
-  to = "/.netlify/functions/:splat"
-  status = 200
-
-# Headers to optimmize CDN
+# Headers to optimize CDN
 [[headers]]
   for = "/api/exchange-rate"
   [headers.values]
