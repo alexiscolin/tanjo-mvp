@@ -154,7 +154,7 @@ export default function AdminPage() {
     try {
       const priceJpy = Math.round(parseFloat(form.price))
       const response = await fetch(`/api/gifts/${editingGift.id}`, {
-        method: 'PUT',
+        method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           password: storedPassword,
