@@ -36,18 +36,11 @@ export interface Contribution {
   createdAt: string
 }
 
-export type GiftCategory = 
-  | 'chambre'
-  | 'vetements'
-  | 'repas'
-  | 'bain'
-  | 'transport'
-  | 'jouets'
-  | 'sante'
-  | 'experiences'
-  | 'autre'
-
-export const categoryLabels: Record<GiftCategory, string> = {
+/**
+ * Category labels with emojis
+ * This is the single source of truth for categories
+ */
+export const categoryLabels = {
   chambre: '🛏️ Chambre',
   vetements: '👕 Vêtements',
   repas: '🍼 Repas',
@@ -57,7 +50,21 @@ export const categoryLabels: Record<GiftCategory, string> = {
   sante: '💊 Santé',
   experiences: '✨ Expériences',
   autre: '🎁 Autre',
-}
+} as const
+
+/**
+ * Gift category type - derived from categoryLabels keys
+ */
+export type GiftCategory = keyof typeof categoryLabels
+
+/**
+ * All categories including 'all' for filtering
+ * Derived from categoryLabels to avoid duplication
+ */
+export const allCategories: (GiftCategory | 'all')[] = [
+  'all',
+  ...Object.keys(categoryLabels) as GiftCategory[]
+]
 
 export interface ListInfo {
   title: string

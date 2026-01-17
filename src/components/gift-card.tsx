@@ -122,7 +122,7 @@ export function GiftCard({ gift, onReserve, onContribute, selectedCurrency, exch
                 className="w-full bg-rose-500 hover:bg-rose-600"
                 onClick={() => onContribute?.(gift)}
               >
-                <HandHeart className="mr-2 h-4 w-4" />
+                <HandHeart className="mr-1 h-4 w-4" />
                 Participer
               </Button>
             ) : (
@@ -130,7 +130,7 @@ export function GiftCard({ gift, onReserve, onContribute, selectedCurrency, exch
                 className="w-full bg-rose-500 hover:bg-rose-600"
                 onClick={() => onReserve?.(gift)}
               >
-                <Gift className="mr-2 h-4 w-4" />
+                <Gift className="mr-1 h-4 w-4" />
                 Je l'offre
               </Button>
             )}

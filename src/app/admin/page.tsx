@@ -7,6 +7,7 @@ import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
 import { Badge } from '@/components/ui/badge'
+import { Switch } from '@/components/ui/switch'
 import {
   Dialog,
   DialogContent,
@@ -16,7 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import type { Gift, GiftCategory } from '@/types'
-import { categoryLabels } from '@/types'
+import { categoryLabels, allCategories } from '@/types'
 import { 
   Plus, 
   Trash2, 
@@ -40,6 +41,9 @@ export default function AdminPage() {
   const [editingGift, setEditingGift] = useState<Gift | null>(null)
   const [showAddDialog, setShowAddDialog] = useState(false)
   const [potThreshold, setPotThreshold] = useState(18000)
+  const [selectedCategory, setSelectedCategory] = useState<GiftCategory | 'all'>('all')
+  const [showOccasionOnly, setShowOccasionOnly] = useState(false)
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false)
 
   // Form state
   const [form, setForm] = useState({
@@ -223,6 +227,12 @@ export default function AdminPage() {
   }
 
   const formatPrice = (jpy: number) => `¥${jpy.toLocaleString('ja-JP')}`
+  
+  // Filter gifts by category, occasion, and availability
+  const filteredGifts = gifts
+    .filter(g => selectedCategory === 'all' || g.category === selectedCategory)
+    .filter(g => !showOccasionOnly || g.isOccasion)
+    .filter(g => !showAvailableOnly || !g.isReserved)
 
   // Login screen
   if (!isAuthenticated) {
@@ -295,13 +305,63 @@ export default function AdminPage() {
 
       {/* Content */}
       <main className="container mx-auto px-4 md:px-6 py-8">
-        {/* Add button */}
+        {/* Top section: title + add button */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Mes cadeaux</h2>
           <Button onClick={() => { resetForm(); setShowAddDialog(true); }} className="bg-rose-500 hover:bg-rose-600">
             <Plus className="mr-2 h-4 w-4" />
             Ajouter un cadeau
           </Button>
+        </div>
+
+        {/* Category filters */}
+        <div className="mb-6">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4">
+            {/* Category buttons */}
+            <div className="overflow-x-auto pb-2 flex-1">
+              <div className="flex gap-2 min-w-max">
+                {allCategories.map((category) => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category)}
+                    className={selectedCategory === category 
+                      ? 'bg-rose-500 hover:bg-rose-600' 
+                      : ''
+                    }
+                  >
+                    {category === 'all' ? '✨ Tous' : categoryLabels[category]}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Toggles */}
+            <div className="flex flex-wrap items-center gap-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="occasion-toggle"
+                  checked={showOccasionOnly}
+                  onCheckedChange={setShowOccasionOnly}
+                />
+                <Label htmlFor="occasion-toggle" className="text-sm cursor-pointer whitespace-nowrap">
+                  Occasion uniquement
+                </Label>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="available-toggle"
+                  checked={showAvailableOnly}
+                  onCheckedChange={setShowAvailableOnly}
+                />
+                <Label htmlFor="available-toggle" className="text-sm cursor-pointer whitespace-nowrap">
+                  Disponibles uniquement
+                </Label>
+              </div>
+            </div>
+          </div>
         </div>
 
         {/* Gifts list */}
@@ -322,7 +382,7 @@ export default function AdminPage() {
           </Card>
         ) : (
           <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {gifts.map((gift) => (
+            {filteredGifts.map((gift) => (
               <Card key={gift.id} className="overflow-hidden">
                 <div className="aspect-video bg-muted relative">
                   {gift.imageUrl ? (
@@ -341,7 +401,12 @@ export default function AdminPage() {
                   )}
                 </div>
                 <CardContent className="p-4">
-                  <h3 className="font-medium mb-1 line-clamp-1">{gift.title}</h3>
+                  <div className="flex items-start justify-between gap-2 mb-2">
+                    <h3 className="font-medium line-clamp-1 flex-1">{gift.title}</h3>
+                    <Badge variant="secondary" className="shrink-0 text-xs">
+                      {categoryLabels[gift.category]}
+                    </Badge>
+                  </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{gift.description}</p>
                   <div className="flex items-center justify-between">
                     <span className="font-semibold text-rose-500">{formatPrice(gift.price)}</span>

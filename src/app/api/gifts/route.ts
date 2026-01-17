@@ -12,7 +12,13 @@ export async function GET() {
     // Filter empty rows
     const validGifts = gifts.filter(g => g.title && g.title.trim() !== '')
     
-    return NextResponse.json({ gifts: validGifts, listInfo })
+    const response = NextResponse.json({ gifts: validGifts, listInfo })
+    
+    // Short cache: 10 seconds to see changes quickly while reducing unnecessary calls
+    // Perfect for low-traffic sites with frequent admin updates
+    response.headers.set('Cache-Control', 'public, s-maxage=10, stale-while-revalidate=30')
+    
+    return response
   } catch (error) {
     console.error('Error fetching gifts:', error)
     return NextResponse.json(

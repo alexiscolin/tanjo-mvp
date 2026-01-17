@@ -4,18 +4,18 @@ import { useState, useEffect, useCallback } from 'react'
 import Image from 'next/image'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 import { GiftCard } from '@/components/gift-card'
 import { FreeContributionCard } from '@/components/free-contribution-card'
 import { ContributionDialog } from '@/components/contribution-dialog'
 import { CurrencySelector } from '@/components/currency-selector'
 import type { Gift, GiftCategory, ListInfo } from '@/types'
-import { categoryLabels } from '@/types'
+import { categoryLabels, allCategories } from '@/types'
 import { Heart, Calendar, Gift as GiftIcon, Loader2, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { type Currency, type ExchangeRates, detectPreferredCurrency } from '@/lib/currency'
 import { POOL_ID } from '@/lib/constants'
-
-const categories: (GiftCategory | 'all')[] = ['all', 'chambre', 'vetements', 'repas', 'bain', 'transport', 'jouets', 'experiences', 'autre']
 
 export default function HomePage() {
   const [gifts, setGifts] = useState<Gift[]>([])
@@ -27,28 +27,28 @@ export default function HomePage() {
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>('JPY')
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({ EUR: 0.00625, USD: 0.0069 })
   const [freeContributionTotal, setFreeContributionTotal] = useState(0)
+  const [showOccasionOnly, setShowOccasionOnly] = useState(false)
+  const [showAvailableOnly, setShowAvailableOnly] = useState(false)
 
   const fetchGifts = useCallback(async () => {
     try {
-      // Fetch gifts, exchange rates and free contributions in parallel
-      const [giftsResponse, ratesResponse, freeContribResponse] = await Promise.all([
-        fetch('/api/gifts'),
-        fetch('/api/exchange-rate'),
+      // Fetch registry data (cached) + free contributions (always fresh)
+      const [registryResponse, freeContribResponse] = await Promise.all([
+        fetch('/api/registry'),
         fetch(`/api/gifts/${POOL_ID}/contributions`).catch(() => ({ json: () => ({ contributions: [] }) }))
       ])
       
-      const giftsData = await giftsResponse.json()
-      const ratesData = await ratesResponse.json()
+      const registryData = await registryResponse.json()
       const freeContribData = await freeContribResponse.json()
       
-      setGifts(giftsData.gifts || [])
-      setListInfo(giftsData.listInfo || null)
+      setGifts(registryData.gifts || [])
+      setListInfo(registryData.listInfo || null)
       
-      if (ratesData.rates) {
-        setExchangeRates(ratesData.rates)
+      if (registryData.exchangeRates) {
+        setExchangeRates(registryData.exchangeRates)
       }
       
-      // Calculate total free contributions
+      // Calculate total free contributions (always fresh, not cached)
       const total = (freeContribData.contributions || []).reduce((sum: number, c: any) => sum + (c.amount || 0), 0)
       setFreeContributionTotal(total)
     } catch (error) {
@@ -69,9 +69,10 @@ export default function HomePage() {
     fetchGifts()
   }, [fetchGifts])
 
-  const filteredGifts = selectedCategory === 'all' 
-    ? gifts 
-    : gifts.filter(g => g.category === selectedCategory)
+  const filteredGifts = gifts
+    .filter(g => selectedCategory === 'all' || g.category === selectedCategory)
+    .filter(g => !showOccasionOnly || g.isOccasion)
+    .filter(g => !showAvailableOnly || !g.isReserved)
 
   const stats = {
     total: gifts.length,
@@ -176,23 +177,53 @@ export default function HomePage() {
 
       {/* Content */}
       <main className="container mx-auto px-4 md:px-6 py-8 md:py-12">
-        {/* Category filters */}
-        <div className="mb-8 overflow-x-auto pb-2">
-          <div className="flex gap-2 min-w-max">
-            {categories.map((category) => (
-              <Button
-                key={category}
-                variant={selectedCategory === category ? 'default' : 'outline'}
-                size="sm"
-                onClick={() => setSelectedCategory(category)}
-                className={selectedCategory === category 
-                  ? 'bg-rose-500 hover:bg-rose-600' 
-                  : ''
-                }
-              >
-                {category === 'all' ? '✨ Tous' : categoryLabels[category]}
-              </Button>
-            ))}
+        {/* Category filters + Toggles */}
+        <div className="mb-8">
+          <div className="flex flex-col lg:flex-row lg:items-center gap-4 mb-4">
+            {/* Category buttons */}
+            <div className="overflow-x-auto pb-2 flex-1">
+              <div className="flex gap-2 min-w-max">
+                {allCategories.map((category) => (
+                  <Button
+                    key={category}
+                    variant={selectedCategory === category ? 'default' : 'outline'}
+                    size="sm"
+                    onClick={() => setSelectedCategory(category)}
+                    className={selectedCategory === category 
+                      ? 'bg-rose-500 hover:bg-rose-600' 
+                      : ''
+                    }
+                  >
+                    {category === 'all' ? '✨ Tous' : categoryLabels[category]}
+                  </Button>
+                ))}
+              </div>
+            </div>
+
+            {/* Toggles */}
+            <div className="flex flex-wrap items-center gap-4 shrink-0">
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="occasion-toggle-home"
+                  checked={showOccasionOnly}
+                  onCheckedChange={setShowOccasionOnly}
+                />
+                <Label htmlFor="occasion-toggle-home" className="text-sm cursor-pointer whitespace-nowrap">
+                  Occasion uniquement
+                </Label>
+              </div>
+              
+              <div className="flex items-center gap-2">
+                <Switch
+                  id="available-toggle-home"
+                  checked={showAvailableOnly}
+                  onCheckedChange={setShowAvailableOnly}
+                />
+                <Label htmlFor="available-toggle-home" className="text-sm cursor-pointer whitespace-nowrap">
+                  Disponibles uniquement
+                </Label>
+              </div>
+            </div>
           </div>
         </div>
 
