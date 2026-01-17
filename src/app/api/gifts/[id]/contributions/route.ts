@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { addContribution, getGifts, getContributions, getPaymentConfig } from '@/lib/google-sheets'
 import { sendContributionConfirmationEmail, sendContributionNotificationToAdmin } from '@/lib/resend'
 import { isValidEmail, sanitizeName, sanitizeString, isValidPrice } from '@/lib/utils'
-import { getExchangeRates } from '@/lib/currency'
+import { getExchangeRates, CURRENCY } from '@/lib/currency'
 
 // GET /api/gifts/[id]/contributions - List all contributors for a gift
 export async function GET(
@@ -120,7 +120,7 @@ export async function POST(
         contributorName: sanitizedName,
         contributorEmail: sanitizedEmail,
         amountInJpy,              // JPY for database storage
-        currency: currency || currency.JPY,
+        currency: currency || CURRENCY.JPY,
         message: sanitizedMessage || undefined,
         totalCollected: newTotal,
         goal: gift.price,

@@ -366,6 +366,7 @@ export async function sendCancellationConfirmationEmail(
   name: string,
   giftTitle: string,
   amount: number,
+  feedback?: string
 ) {
   if (!resend) {
     console.log('📧 Email not sent: Resend not configured')
@@ -392,6 +393,13 @@ export async function sendCancellationConfirmationEmail(
           Montant annulé: <strong>${formatJpy(amount)}</strong>
         </p>
       </div>
+
+      ${feedback ? `
+        <div style="background: #fef5f8; padding: 20px; border-radius: 12px; margin: 24px 0; border: 1px solid #fecdd3;">
+          <h3 style="margin: 0 0 12px 0; color: #1a202c; font-size: 16px;">Votre message :</h3>
+          <p style="margin: 0; color: #4a5568; font-style: italic;">${feedback}</p>
+        </div>
+      ` : ''}
 
       <p style="color: #718096; text-align: center;">
         Nous espérons vous revoir bientôt ! 💕
