@@ -43,7 +43,7 @@ export async function getGifts(): Promise<Gift[]> {
   
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.GIFTS}!A2:M`,
+    range: `${SHEETS.GIFTS}!A2:N`,
   })
 
   const rows = response.data.values || []
@@ -62,6 +62,7 @@ export async function getGifts(): Promise<Gift[]> {
     reservedBy: row[10] || undefined,
     reservedEmail: row[11] || undefined,
     reservedAt: row[12] || undefined,
+    isOccasion: row[13]?.toLowerCase() === 'oui',
   }))
 }
 
@@ -71,7 +72,7 @@ export async function addGift(gift: Omit<Gift, 'id' | 'isReserved' | 'potCurrent
   
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.GIFTS}!A:M`,
+    range: `${SHEETS.GIFTS}!A:N`,
     valueInputOption: 'USER_ENTERED',
     requestBody: {
       values: [[
@@ -88,6 +89,7 @@ export async function addGift(gift: Omit<Gift, 'id' | 'isReserved' | 'potCurrent
         '', // reservedBy
         '', // reservedEmail
         '', // reservedAt
+        gift.isOccasion ? 'OUI' : 'NON', // isOccasion
       ]],
     },
   })
@@ -105,7 +107,7 @@ export async function updateGift(id: string, updates: Partial<Gift>): Promise<vo
   
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.GIFTS}!A${row}:M${row}`,
+    range: `${SHEETS.GIFTS}!A${row}:N${row}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: {
       values: [[
@@ -122,6 +124,7 @@ export async function updateGift(id: string, updates: Partial<Gift>): Promise<vo
         gift.reservedBy || '',
         gift.reservedEmail || '',
         gift.reservedAt || '',
+        gift.isOccasion ? 'OUI' : 'NON',
       ]],
     },
   })
@@ -138,10 +141,10 @@ export async function deleteGift(id: string): Promise<void> {
   const row = rowIndex + 2
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.GIFTS}!A${row}:M${row}`,
+    range: `${SHEETS.GIFTS}!A${row}:N${row}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: {
-      values: [['', '', '', '', '', '', '', '', '', '', '', '', '']],
+      values: [['', '', '', '', '', '', '', '', '', '', '', '', '', '']],
     },
   })
 }

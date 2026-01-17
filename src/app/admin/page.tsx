@@ -49,6 +49,7 @@ export default function AdminPage() {
     imageUrl: '',
     category: 'autre' as GiftCategory,
     externalUrl: '',
+    isOccasion: false,
   })
 
   const fetchConfig = useCallback(async () => {
@@ -111,6 +112,7 @@ export default function AdminPage() {
       imageUrl: '',
       category: 'autre',
       externalUrl: '',
+      isOccasion: false,
     })
   }
 
@@ -215,6 +217,7 @@ export default function AdminPage() {
       imageUrl: gift.imageUrl,
       category: gift.category,
       externalUrl: gift.externalUrl || '',
+      isOccasion: gift.isOccasion || false,
     })
     setEditingGift(gift)
   }
@@ -453,6 +456,19 @@ export default function AdminPage() {
                 placeholder="https://..."
                 className="mt-1.5"
               />
+            </div>
+
+            <div className="flex items-center gap-2">
+              <input
+                type="checkbox"
+                id="isOccasion"
+                checked={form.isOccasion}
+                onChange={(e) => setForm({ ...form, isOccasion: e.target.checked })}
+                className="h-4 w-4 rounded border-gray-300 text-emerald-600 focus:ring-emerald-500"
+              />
+              <Label htmlFor="isOccasion" className="cursor-pointer font-normal">
+                ♻️ Article d&apos;occasion
+              </Label>
             </div>
 
             {form.price && parseFloat(form.price) >= potThreshold && (

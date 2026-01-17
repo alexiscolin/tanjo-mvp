@@ -7,6 +7,7 @@ A simple and elegant baby registry built with Next.js, Google Sheets, and Resend
 - 📝 **Simple admin interface** to manage gifts
 - 💰 **Multi-currency support** (JPY, EUR, USD) with real-time exchange rates
 - 🎁 **Gift reservations** with email notifications
+- ♻️ **Second-hand items** with special "Occasion" badge
 - 💵 **Collective pots** for expensive gifts (configurable thresholds)
 - 👥 **Contributors list** with transparency on pot progress
 - 💳 **Payment instructions** (Wero, Paypal, PayPay) with copy buttons & QR codes
@@ -61,7 +62,7 @@ Open [http://localhost:3000](http://localhost:3000) 🎉
 
 **Sheet "Cadeaux"** (first row = headers):
 ```
-ID | Nom | Description | Prix | Image | Catégorie | Lien | Cagnotte | Montant Collecté | Réservé | Réservé Par | Email | Date Réservation
+ID | Nom | Description | Prix | Image | Catégorie | Lien | Cagnotte | Montant Collecté | Réservé | Réservé Par | Email | Date Réservation | Occasion
 ```
 
 **Sheet "Reservations"**:
@@ -312,6 +313,9 @@ A: Use the Image Picker in the admin. You can:
 **Q: How to enable pot mode for a gift?**
 A: In the admin, check "Mode Cagnotte" when creating/editing a gift. For gifts above the threshold (default 18000¥), it's automatically suggested.
 
+
+**Q: How to mark a gift as second-hand?**
+A: In the admin, check "♻️ Article d'occasion" when creating/editing a gift. A green "Occasion" badge will be displayed on the gift card.
 
 **Q: Can I see who contributed to a pot?**
 A: Yes! Click "Voir les contributeurs" on any pot gift card. Emails are kept private.

@@ -14,6 +14,7 @@ export interface Gift {
   reservedBy?: string
   reservedEmail?: string
   reservedAt?: string
+  isOccasion?: boolean // second-hand item
 }
 
 export interface Reservation {

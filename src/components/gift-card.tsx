@@ -88,9 +88,16 @@ export function GiftCard({ gift, onReserve, onContribute, selectedCurrency, exch
 
         {/* Price */}
         <div className="mb-4">
-          <p className="text-xl font-semibold text-foreground mb-2">
-            {formatPrice(gift.price)}
-          </p>
+          <div className="flex items-center gap-2 mb-2">
+            <p className="text-xl font-semibold text-foreground">
+              {formatPrice(gift.price)}
+            </p>
+            {gift.isOccasion && (
+              <Badge variant="secondary" className="bg-emerald-500 text-white text-xs border-0">
+                ♻️ Occasion
+              </Badge>
+            )}
+          </div>
           
           {gift.isPot && (gift.potCurrentAmount || 0) > 0 && (
             <div className="space-y-1">
