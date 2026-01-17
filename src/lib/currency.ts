@@ -171,20 +171,35 @@ export async function getExchangeRates(): Promise<ExchangeRates> {
 // ============================================================================
 
 /**
+ * Rounding options for currency conversion
+ */
+export type RoundingMode = 'exact' | 'toCents' | 'toWholeUnits'
+
+/**
  * Converts from yens (JPY - base currency) to target currency
  * @param jpy Amount in yens (no cents, yen doesn't have them)
  * @param targetCurrency Target currency (EUR, JPY, USD)
  * @param rates Exchange rates from JPY
- * @returns Amount in target currency (in cents for EUR/USD, in yens for JPY)
+ * @param rounding Rounding mode: 'exact' = raw value in cents, 'toCents' = round to cents (default), 'toWholeUnits' = round to whole units (returns units, not cents)
+ * @returns Amount in target currency (in cents for EUR/USD with 'exact'/'toCents', in whole units with 'toWholeUnits', in yens for JPY)
  */
-export function convertFromJpy(jpy: number, targetCurrency: Currency, rates: ExchangeRates): number {
+export function convertFromJpy(
+  jpy: number, 
+  targetCurrency: Currency, 
+  rates: ExchangeRates,
+  rounding: RoundingMode = 'toCents'
+): number {
   switch (targetCurrency) {
     case CURRENCY.JPY:
-      return jpy // Already in yen
+      return jpy // Always in yen
     case CURRENCY.EUR:
-      return Math.round(jpy * rates.EUR * 100) // Convert to EUR cents
     case CURRENCY.USD:
-      return Math.round(jpy * rates.USD * 100) // Convert to USD cents
+      const rate = targetCurrency === CURRENCY.EUR ? rates.EUR : rates.USD
+      const cents = jpy * rate * 100
+      
+      if (rounding === 'exact') return cents
+      if (rounding === 'toWholeUnits') return Math.round(cents / 100) // Return whole units, not cents
+      return Math.round(cents) // Default: return cents
     default:
       return jpy
   }
@@ -195,18 +210,26 @@ export function convertFromJpy(jpy: number, targetCurrency: Currency, rates: Exc
  * @param amount Amount (in cents for EUR/USD, in yens for JPY)
  * @param fromCurrency Source currency
  * @param rates Exchange rates from JPY
+ * @param rounding Rounding mode: 'exact' = no rounding, 'toCents' = round to yen (default), 'toWholeUnits' = round to hundreds of yen
  * @returns Amount in yens
  */
-export function convertToJpy(amount: number, fromCurrency: Currency, rates: ExchangeRates): number {
+export function convertToJpy(
+  amount: number, 
+  fromCurrency: Currency, 
+  rates: ExchangeRates,
+  rounding: RoundingMode = 'toCents'
+): number {
   switch (fromCurrency) {
     case CURRENCY.JPY:
       return amount
     case CURRENCY.EUR:
-      // amount is in EUR cents
-      return Math.round((amount / 100) / rates.EUR)
     case CURRENCY.USD:
-      // amount is in USD cents
-      return Math.round((amount / 100) / rates.USD)
+      const rate = fromCurrency === CURRENCY.EUR ? rates.EUR : rates.USD
+      const jpy = (amount / 100) / rate
+      
+      if (rounding === 'exact') return jpy
+      if (rounding === 'toWholeUnits') return Math.round(jpy / 100) * 100 // Round to hundreds of yen
+      return Math.round(jpy) // Default: round to yen
     default:
       return amount
   }
@@ -221,9 +244,18 @@ export function convertToJpy(amount: number, fromCurrency: Currency, rates: Exch
  * @param jpy Amount in yens (base currency)
  * @param currency Display currency
  * @param rates Exchange rates from JPY
+ * @param rounded If true, rounds to nearest whole unit (14€ instead of 14.27€)
  */
-export function formatCurrency(jpy: number, currency: Currency, rates: ExchangeRates): string {
-  const amount = convertFromJpy(jpy, currency, rates)
+export function formatCurrency(
+  jpy: number, 
+  currency: Currency, 
+  rates: ExchangeRates,
+  rounded: boolean = false
+): string {
+  // Use appropriate rounding mode
+  const amount = rounded 
+    ? convertFromJpy(jpy, currency, rates, 'toWholeUnits') // Already in whole units, rounded
+    : convertFromJpy(jpy, currency, rates, 'toCents')      // In cents, precise
   
   const localeMap: Record<Currency, string> = {
     EUR: 'fr-FR',
@@ -231,16 +263,24 @@ export function formatCurrency(jpy: number, currency: Currency, rates: ExchangeR
     USD: 'en-US',
   }
   
-  // For JPY, amount is in yen (no cents)
-  // For EUR/USD, amount is in cents
+  // For JPY, amount is always in yen
+  // For EUR/USD: whole units if rounded, otherwise cents/100
   const displayAmount = currency === CURRENCY.JPY 
     ? amount 
-    : amount / 100
+    : rounded ? amount : amount / 100
   
-  return new Intl.NumberFormat(localeMap[currency], {
+  const options: Intl.NumberFormatOptions = {
     style: 'currency',
     currency: currency,
-  }).format(displayAmount)
+  }
+  
+  // If rounded, don't show decimals
+  if (rounded) {
+    options.minimumFractionDigits = 0
+    options.maximumFractionDigits = 0
+  }
+  
+  return new Intl.NumberFormat(localeMap[currency], options).format(displayAmount)
 }
 
 /**
@@ -279,7 +319,7 @@ export function formatJpy(jpy: number): string {
  * Formats an amount in euros
  */
 export function formatEur(jpy: number, rates: ExchangeRates): string {
-  const eurCents = convertFromJpy(jpy, 'EUR', rates)
+  const eurCents = convertFromJpy(jpy, 'EUR', rates, 'toCents')
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',

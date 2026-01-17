@@ -1,9 +1,8 @@
 'use client'
 
-import * as React from 'react'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Button } from '@/components/ui/button'
-import { Users, Loader2, Heart, ArrowLeft } from 'lucide-react'
+import { Loader2, Heart, ArrowLeft } from 'lucide-react'
 import { type Currency, type ExchangeRates, formatCurrency } from '@/lib/currency'
 import { POOL_ID } from '@/lib/constants'
 
@@ -53,7 +52,12 @@ export function ContributorsList({
     setError('')
     
     try {
-      const response = await fetch(`/api/gifts/${giftId}/contributions`)
+      // Use different API endpoint for pool vs regular gifts
+      const endpoint = giftId === POOL_ID 
+        ? '/api/pool/contributions' 
+        : `/api/gifts/${giftId}/contributions`
+      
+      const response = await fetch(endpoint)
       const data = await response.json()
       
       if (!response.ok) {
@@ -70,7 +74,7 @@ export function ContributorsList({
   }
 
   // Fetch on mount
-  React.useEffect(() => {
+  useEffect(() => {
     fetchContributions()
   }, [giftId])
 
@@ -87,7 +91,7 @@ export function ContributorsList({
     }
   }
 
-  // Contributors list view (replaces card content)
+  // Contributors list view
   return (
     <div className="space-y-3">
       <div className="flex items-center justify-between">

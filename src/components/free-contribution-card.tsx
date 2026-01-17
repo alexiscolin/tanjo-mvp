@@ -1,8 +1,9 @@
 'use client'
 
+import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { HandHeart, Sparkles } from 'lucide-react'
+import { HandHeart, Sparkles, Users } from 'lucide-react'
 import { type Currency, type ExchangeRates, formatCurrency } from '@/lib/currency'
 import { ContributorsList } from './contributors-list'
 import { POOL_ID } from '@/lib/constants'
@@ -22,7 +23,8 @@ export function FreeContributionCard({
   selectedCurrency,
   exchangeRates
 }: FreeContributionCardProps) {
-  const formatPrice = (cents: number) => formatCurrency(cents, selectedCurrency, exchangeRates)
+  const [showContributors, setShowContributors] = useState(false)
+  const formatPrice = (cents: number) => formatCurrency(cents, selectedCurrency, exchangeRates, true)
 
   return (
     <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-rose-50">
@@ -65,15 +67,32 @@ export function FreeContributionCard({
           Contribuer librement
         </Button>
 
-        {/* Contributors list */}
+        {/* Contributors toggle button */}
         {totalAmount > 0 && (
-          <ContributorsList 
-            giftId={POOL_ID}
-            giftTitle={title}
-            isCompleted={false}
-            selectedCurrency={selectedCurrency}
-            exchangeRates={exchangeRates}
-          />
+          <>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowContributors(!showContributors)}
+              className="w-full text-xs text-muted-foreground hover:text-foreground mt-2"
+            >
+              <Users className="mr-1.5 h-3.5 w-3.5" />
+              {showContributors ? 'Masquer' : 'Voir'} les contributeurs
+            </Button>
+            
+            {showContributors && (
+              <div className="mt-3">
+                <ContributorsList 
+                  giftId={POOL_ID}
+                  giftTitle={title}
+                  isCompleted={false}
+                  selectedCurrency={selectedCurrency}
+                  exchangeRates={exchangeRates}
+                  onBack={() => setShowContributors(false)}
+                />
+              </div>
+            )}
+          </>
         )}
       </CardContent>
     </Card>

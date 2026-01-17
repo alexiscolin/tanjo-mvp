@@ -16,7 +16,7 @@ import { Label } from '@/components/ui/label'
 import { Gift as GiftType, PaymentConfig } from '@/types'
 import { HandHeart, Gift, Loader2, CheckCircle } from 'lucide-react'
 import { type Currency, type ExchangeRates, formatCurrency, convertToJpy, convertFromJpy, CURRENCY } from '@/lib/currency'
-import { DEFAULT_CONFIG } from '@/lib/constants'
+import { POOL_ID } from '@/lib/constants'
 import { PaymentInstructions } from './payment-instructions'
 
 interface ContributionDialogProps {
@@ -44,37 +44,27 @@ export function ContributionDialog({
   
   const [name, setName] = useState('')
   const [email, setEmail] = useState('')
-  const [amount, setAmount] = useState(0)
+  const [amount, setAmount] = useState(0) // In display currency (whole units)
   const [customAmount, setCustomAmount] = useState('')
   const [message, setMessage] = useState('')
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [isSuccess, setIsSuccess] = useState(false)
   const [error, setError] = useState('')
-  const [suggestedAmounts, setSuggestedAmounts] = useState<number[]>([...DEFAULT_CONFIG.SUGGESTED_CONTRIBUTIONS_JPY])
+  const [suggestedAmounts, setSuggestedAmounts] = useState<number[]>([]) // In display currency (whole units)
   const [paymentMethods, setPaymentMethods] = useState<PaymentConfig>({})
-  const [submittedAmount, setSubmittedAmount] = useState(0)
+  const [submittedAmount, setSubmittedAmount] = useState(0) // In display currency (whole units)
   const [contributionId, setContributionId] = useState<string | null>(null)
   const [isCancelling, setIsCancelling] = useState(false)
 
   const handleClose = () => onOpenChange(false)
 
-  const formatPrice = (cents: number) => formatCurrency(cents, selectedCurrency, exchangeRates)
+  const formatPrice = (jpy: number) => formatCurrency(jpy, selectedCurrency, exchangeRates, true)
   
-  // Set default amount based on mode
-  useEffect(() => {
-    if (open && gift) {
-      if (isReservation) {
-        setAmount(gift.price) // Full price for reservation
-      } else {
-        setAmount(remainingAmount || DEFAULT_CONFIG.SUGGESTED_CONTRIBUTIONS_JPY[1])
-      }
-    }
-  }, [open, gift, remainingAmount, isReservation])
-  
-  // Build suggested amounts (only for contribute mode)
-  const suggestedAmountsList = !isReservation && gift && remainingAmount > 0 
-    ? [remainingAmount, ...suggestedAmounts].filter((amt, idx, arr) => arr.indexOf(amt) === idx).slice(0, 4)
-    : suggestedAmounts.slice(0, 4)
+  // Helper to convert JPY to display currency (whole units, already rounded by convertFromJpy)
+  const AmountToDisplay = (jpy: number) => 
+    selectedCurrency === CURRENCY.JPY 
+      ? Math.round(jpy)
+      : convertFromJpy(jpy, selectedCurrency, exchangeRates, 'toWholeUnits')
   
   // Fetch suggested amounts and payment methods on mount
   useEffect(() => {
@@ -82,9 +72,11 @@ export function ContributionDialog({
       try {
         const response = await fetch('/api/config')
         const data = await response.json()
+        
         if (data.suggestedContributionsJpy) {
-          setSuggestedAmounts(data.suggestedContributionsJpy)
+          setSuggestedAmounts(data.suggestedContributionsJpy.map(AmountToDisplay))
         }
+        
         if (data.payment) {
           setPaymentMethods(data.payment)
         }
@@ -93,35 +85,55 @@ export function ContributionDialog({
       }
     }
     fetchConfig()
-  }, [])
+  }, [selectedCurrency, exchangeRates])
+
+  // Set default amount when dialog opens
+  useEffect(() => {
+    if (open && gift && suggestedAmounts.length > 0) {
+      if (isReservation) {
+        setAmount(AmountToDisplay(gift.price))
+      } else {
+        const remaining = AmountToDisplay(remainingAmount)
+        const defaultAmt = remaining > 0 ? remaining : (suggestedAmounts[1] ?? suggestedAmounts[0])
+        setAmount(defaultAmt)
+      }
+    }
+  }, [open, gift, remainingAmount, isReservation, suggestedAmounts])
+  
+  // Build suggested amounts list
+  const remaining = AmountToDisplay(remainingAmount)
+  const suggestedAmountsList = !isReservation && remaining > 0
+    ? [remaining, ...suggestedAmounts].filter((amt, idx, arr) => arr.indexOf(amt) === idx).slice(0, 4)
+    : suggestedAmounts.slice(0, 4)
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!gift) return
 
-    // For reservation: always use full price
-    // For contribution: use selected/custom amount
-    let finalAmount: number
-    if (isReservation) {
-      finalAmount = gift.price
-    } else if (customAmount) {
-      const amountInCents = Math.round(parseFloat(customAmount) * 100)
-      finalAmount = convertToJpy(amountInCents, selectedCurrency, exchangeRates)
-    } else {
-      finalAmount = amount
-    }
+    // Get display amount (what user sees)
+    const displayAmount = customAmount ? Math.round(parseFloat(customAmount)) : amount
+    
+    // Convert to JPY for API
+    const finalAmountJpy = selectedCurrency === CURRENCY.JPY
+      ? Math.round(displayAmount)
+      : convertToJpy(displayAmount * 100, selectedCurrency, exchangeRates)
 
     setIsSubmitting(true)
     setError('')
     
     try {
-      const response = await fetch(`/api/gifts/${gift.id}/contributions`, {
+      // Use different endpoint for pool contributions
+      const endpoint = gift.id === POOL_ID 
+        ? '/api/pool/contributions'
+        : `/api/gifts/${gift.id}/contributions`
+      
+      const response = await fetch(endpoint, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
           name,
           email,
-          amount: finalAmount,
+          amount: finalAmountJpy,
           message: message || undefined,
         }),
       })
@@ -133,7 +145,8 @@ export function ContributionDialog({
       
       const data = await response.json()
       
-      setSubmittedAmount(finalAmount)
+      // Store the display amount (what user saw)
+      setSubmittedAmount(displayAmount)
       setContributionId(data.contributionId)
       setIsSuccess(true)
       
@@ -200,13 +213,6 @@ export function ContributionDialog({
     handleClose()
   }
 
-  const getDisplayAmount = () => {
-    if (selectedCurrency === CURRENCY.JPY) {
-      return submittedAmount
-    }
-    return convertFromJpy(submittedAmount, selectedCurrency, exchangeRates)
-  }
-
   const hasPaymentMethods = paymentMethods.weroPhone || 
     paymentMethods.paypayId || paymentMethods.paypayQrUrl || paymentMethods.paypalMeUsername
 
@@ -232,7 +238,7 @@ export function ContributionDialog({
                 Pour finaliser {isReservation ? 'votre réservation' : 'votre contribution'}, effectuez le paiement ci-dessous :
               </p>
               <PaymentInstructions
-                amount={getDisplayAmount()}
+                amount={submittedAmount}
                 currency={selectedCurrency}
                 paymentConfig={paymentMethods}
                 contributorName={name}
@@ -299,7 +305,9 @@ export function ContributionDialog({
           <DialogDescription>
             {isReservation 
               ? 'Réservez ce cadeau en remplissant le formulaire ci-dessous.'
-              : 'Participez au montant de votre choix pour ce cadeau.'
+              : gift.id === POOL_ID
+                ? 'Participez au montant de votre choix à notre cagnotte libre.'
+                : 'Participez au montant de votre choix pour ce cadeau.'
             }
           </DialogDescription>
         </DialogHeader>
@@ -319,7 +327,12 @@ export function ContributionDialog({
               </div>
             </div>
           )}
-          {gift.price > 0 && (
+          {/* Show remaining amount for gifts with target, or total collected for pool */}
+          {gift.id === POOL_ID && gift.isPot ? (
+            <p className="text-lg font-semibold text-rose-500">
+              {formatPrice(gift.potCurrentAmount || 0)} collectés
+            </p>
+          ) : gift.price > 0 && (
             <p className="text-lg font-semibold text-rose-500">
               {isReservation ? formatPrice(gift.price) : `${formatPrice(remainingAmount)} restants`}
             </p>
@@ -333,19 +346,9 @@ export function ContributionDialog({
               <Label>Montant de votre participation</Label>
               <div className="grid grid-cols-4 gap-2 mt-1.5 mb-2">
                 {suggestedAmountsList.map((amt, idx) => {
-                  const isTotal = idx === 0 && amt === remainingAmount
-                  
-                  const amountInSelectedCurrency = (() => {
-                    if (selectedCurrency === CURRENCY.JPY) {
-                      return Math.round(amt)
-                    }
-                    const converted = convertFromJpy(amt, selectedCurrency, exchangeRates)
-                    const value = converted / 100
-                    return isTotal ? value.toFixed(2) : Math.round(value)
-                  })()
-                  
-                  const currencySymbol = selectedCurrency === CURRENCY.EUR ? '€' : selectedCurrency === CURRENCY.USD ? '$' : '¥'
-                  const displayAmount = `${amountInSelectedCurrency}${currencySymbol}`
+                  const isTotal = idx === 0 && amt === remaining
+                  const symbol = selectedCurrency === CURRENCY.EUR ? '€' : selectedCurrency === CURRENCY.USD ? '$' : '¥'
+                  const displayAmt = Math.round(amt) // Ensure no decimals
                   
                   return (
                     <Button
@@ -361,11 +364,11 @@ export function ContributionDialog({
                     >
                       {isTotal ? (
                         <>
-                          <span className="block">{displayAmount}</span>
+                          <span className="block">{displayAmt}{symbol}</span>
                           <span className="block text-[10px] opacity-80">Total</span>
                         </>
                       ) : (
-                        displayAmount
+                        `${displayAmt}${symbol}`
                       )}
                     </Button>
                   )
@@ -375,7 +378,7 @@ export function ContributionDialog({
               <div className="relative">
                 <Input
                   type="number"
-                  step="0.01"
+                  step="1"
                   min="0"
                   placeholder={`Montant personnalisé (${selectedCurrency})`}
                   value={customAmount}

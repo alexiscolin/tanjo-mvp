@@ -20,13 +20,11 @@ interface GiftCardProps {
 
 export function GiftCard({ gift, onReserve, onContribute, selectedCurrency, exchangeRates }: GiftCardProps) {
   const [showContributors, setShowContributors] = useState(false)
-  const formatPrice = (cents: number) => formatCurrency(cents, selectedCurrency, exchangeRates)
+  const formatPrice = (cents: number) => formatCurrency(cents, selectedCurrency, exchangeRates, true)
 
   const progressPercentage = gift.isPot && gift.potCurrentAmount 
     ? Math.min((gift.potCurrentAmount / gift.price) * 100, 100)
     : 0
-
-  const hasContributors = gift.isPot && (gift.potCurrentAmount || 0) > 0
 
   return (
     <Card className={cn(
@@ -80,84 +78,112 @@ export function GiftCard({ gift, onReserve, onContribute, selectedCurrency, exch
       </div>
 
       <CardContent className="p-4">
-        {showContributors && hasContributors ? (
-          /* Contributors view - remplace tout le contenu */
-          <ContributorsList 
-            giftId={gift.id}
-            giftTitle={gift.title}
-            giftPrice={gift.price}
-            giftCurrentAmount={gift.potCurrentAmount}
-            isCompleted={gift.isReserved}
-            selectedCurrency={selectedCurrency}
-            exchangeRates={exchangeRates}
-            onBack={() => setShowContributors(false)}
-          />
-        ) : (
-          /* Normal view */
-          <>
-            {/* Title & Description */}
-            <h3 className="font-medium text-lg leading-tight mb-2 line-clamp-2">
-              {gift.title}
-            </h3>
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-              {gift.description}
-            </p>
+        {/* Title & Description */}
+        <h3 className="font-medium text-lg leading-tight mb-2 line-clamp-2">
+          {gift.title}
+        </h3>
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+          {gift.description}
+        </p>
 
-            {/* Price */}
-            <div className="mb-4">
-              <p className="text-xl font-semibold text-foreground mb-2">
-                {formatPrice(gift.price)}
+        {/* Price */}
+        <div className="mb-4">
+          <p className="text-xl font-semibold text-foreground mb-2">
+            {formatPrice(gift.price)}
+          </p>
+          
+          {gift.isPot && (gift.potCurrentAmount || 0) > 0 && (
+            <div className="space-y-1">
+              <p className="text-xs text-muted-foreground">
+                {formatPrice(gift.potCurrentAmount || 0)} collectés (<span className="text-rose-500 font-medium">{Math.round(progressPercentage)}%</span>)
               </p>
-              
-              {gift.isPot && (gift.potCurrentAmount || 0) > 0 && (
-                <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">
-                    {formatPrice(gift.potCurrentAmount || 0)} collectés (<span className="text-rose-500 font-medium">{Math.round(progressPercentage)}%</span>)
-                  </p>
-                  <div className="relative h-1 bg-muted rounded-full overflow-hidden">
-                    <div 
-                      className="h-full bg-rose-400 rounded-full transition-all duration-500"
-                      style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+              <div className="relative h-1 bg-muted rounded-full overflow-hidden">
+                <div 
+                  className="h-full bg-rose-400 rounded-full transition-all duration-500"
+                  style={{ width: `${Math.min(progressPercentage, 100)}%` }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Action button */}
+        {!gift.isReserved && (
+          <>
+            {gift.isPot ? (
+              <Button 
+                className="w-full bg-rose-500 hover:bg-rose-600"
+                onClick={() => onContribute?.(gift)}
+              >
+                <HandHeart className="mr-2 h-4 w-4" />
+                Participer
+              </Button>
+            ) : (
+              <Button 
+                className="w-full bg-rose-500 hover:bg-rose-600"
+                onClick={() => onReserve?.(gift)}
+              >
+                <Gift className="mr-2 h-4 w-4" />
+                Je l'offre
+              </Button>
+            )}
+            {gift.isPot && (gift.potCurrentAmount || 0) > 0 && (
+              <>
+                <Button 
+                  variant="ghost" 
+                  size="sm" 
+                  onClick={() => setShowContributors(!showContributors)}
+                  className="w-full text-xs text-muted-foreground hover:text-foreground mt-2"
+                >
+                  <Users className="mr-1.5 h-3.5 w-3.5" />
+                  {showContributors ? 'Masquer' : 'Voir'} les contributeurs
+                </Button>
+                
+                {showContributors && (
+                  <div className="mt-3">
+                    <ContributorsList 
+                      giftId={gift.id}
+                      giftTitle={gift.title}
+                      giftPrice={gift.price}
+                      giftCurrentAmount={gift.potCurrentAmount}
+                      isCompleted={gift.isReserved}
+                      selectedCurrency={selectedCurrency}
+                      exchangeRates={exchangeRates}
+                      onBack={() => setShowContributors(false)}
                     />
                   </div>
-                </div>
-              )}
-            </div>
-
-            {/* Action button */}
-            {!gift.isReserved && (
-              <>
-                {gift.isPot ? (
-                  <Button 
-                    className="w-full bg-rose-500 hover:bg-rose-600"
-                    onClick={() => onContribute?.(gift)}
-                  >
-                    <HandHeart className="mr-2 h-4 w-4" />
-                    Participer
-                  </Button>
-                ) : (
-                  <Button 
-                    className="w-full bg-rose-500 hover:bg-rose-600"
-                    onClick={() => onReserve?.(gift)}
-                  >
-                    <Gift className="mr-2 h-4 w-4" />
-                    Je l'offre
-                  </Button>
                 )}
               </>
             )}
-
-            {/* Contributors button */}
-            {hasContributors && (
-              <Button 
-                variant="ghost" 
-                size="sm" 
-                onClick={() => setShowContributors(true)}
-                className="w-full text-xs text-muted-foreground hover:text-foreground mt-2"
-              >
-                <Users className="mr-1.5 h-3.5 w-3.5" />
-                Voir les contributeurs
-              </Button>
+          </>
+        )}
+        
+        {/* Contributors list for completed pots */}
+        {gift.isReserved && gift.isPot && (gift.potCurrentAmount || 0) > 0 && (
+          <>
+            <Button 
+              variant="ghost" 
+              size="sm" 
+              onClick={() => setShowContributors(!showContributors)}
+              className="w-full text-xs text-muted-foreground hover:text-foreground"
+            >
+              <Users className="mr-1.5 h-3.5 w-3.5" />
+              {showContributors ? 'Masquer' : 'Voir'} les contributeurs
+            </Button>
+            
+            {showContributors && (
+              <div className="mt-3">
+                <ContributorsList 
+                  giftId={gift.id}
+                  giftTitle={gift.title}
+                  giftPrice={gift.price}
+                  giftCurrentAmount={gift.potCurrentAmount}
+                  isCompleted={true}
+                  selectedCurrency={selectedCurrency}
+                  exchangeRates={exchangeRates}
+                  onBack={() => setShowContributors(false)}
+                />
+              </div>
             )}
           </>
         )}

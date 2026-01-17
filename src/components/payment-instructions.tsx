@@ -1,13 +1,14 @@
 'use client'
 
 import { useState, useEffect } from 'react'
+import Image from 'next/image'
 import { Button } from '@/components/ui/button'
 import { PaymentConfig } from '@/types'
 import { Copy, Check, Smartphone, QrCode, ExternalLink, Eye, EyeOff } from 'lucide-react'
 import { type Currency, CURRENCY } from '@/lib/currency'
 
 interface PaymentInstructionsProps {
-  amount: number // in the display currency
+  amount: number // in whole units (14€, 2500¥)
   currency: Currency
   paymentConfig: PaymentConfig
   contributorName: string
@@ -27,8 +28,8 @@ export function PaymentInstructions({
   const formattedAmount = isJapan 
     ? `¥${amount.toLocaleString('ja-JP')}`
     : currency === CURRENCY.EUR 
-      ? `${(amount / 100).toFixed(2)}€`
-      : `$${(amount / 100).toFixed(2)}`
+      ? `${amount.toFixed(2)}€`
+      : `$${amount.toFixed(2)}`
 
   // Deobfuscate phone number: base64 decode + reverse
   const deobfuscatePhone = (obfuscated: string): string => {
@@ -56,10 +57,10 @@ export function PaymentInstructions({
   }
 
   const CopyButton = ({ text, field, label }: { text: string; field: string; label: string }) => (
-    <div className="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
-      <div>
+    <div className="flex items-center justify-between gap-3 p-3 bg-gray-50 rounded-lg">
+      <div className="min-w-0 flex-1">
         <p className="text-xs text-muted-foreground">{label}</p>
-        <p className="font-mono font-medium">{text}</p>
+        <p className="font-mono font-medium text-sm truncate">{text}</p>
       </div>
       <Button
         variant="ghost"
@@ -91,15 +92,21 @@ export function PaymentInstructions({
         <CopyButton text={formattedAmount} field="amount" label="金額" />
         
         {paymentConfig.paypayId && (
-          <CopyButton text={paymentConfig.paypayId} field="paypayId" label="PayPay ID" />
+          <CopyButton text={paymentConfig.paypayId} field="paypayId" label="PayPay Link" />
         )}
 
         {paymentConfig.paypayQrUrl && (
           <div className="flex justify-center p-4 bg-white rounded-lg border">
-            <img 
-              src={paymentConfig.paypayQrUrl} 
+            <Image 
+              src={paymentConfig.paypayQrUrl.startsWith('http') 
+                ? paymentConfig.paypayQrUrl 
+                : `/qr/${paymentConfig.paypayQrUrl}`}
               alt="PayPay QR Code"
-              className="w-48 h-48 object-contain"
+              width={192}
+              height={192}
+              className="object-contain"
+              unoptimized={paymentConfig.paypayQrUrl.startsWith('http')}
+              priority
             />
           </div>
         )}
