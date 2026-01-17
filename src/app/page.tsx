@@ -34,7 +34,7 @@ export default function HomePage() {
     try {
       // Fetch registry data (cached) + free contributions (always fresh)
       const [registryResponse, freeContribResponse] = await Promise.all([
-        fetch('/api/registry'),
+        fetch('/api/registry', { cache: 'no-store' }), // Force fresh data
         fetch(`/api/gifts/${POOL_ID}/contributions`).catch(() => ({ json: () => ({ contributions: [] }) }))
       ])
       
