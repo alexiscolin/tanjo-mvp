@@ -55,11 +55,16 @@ export function GiftCard({ gift, onReserve, onContribute, selectedCurrency, exch
 
         {/* Reserved overlay */}
         {gift.isReserved && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex items-center justify-center">
+          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2">
             <Badge className="bg-green-500 text-white border-0 text-sm px-4 py-2">
               <Check className="mr-2 h-4 w-4" />
               {gift.isPot ? 'Objectif atteint !' : 'Réservé'}
             </Badge>
+            {gift.reservedBy && (
+              <p className="text-white text-sm font-medium bg-black/50 px-3 py-1 rounded-full">
+                par {gift.reservedBy}
+              </p>
+            )}
           </div>
         )}
 

@@ -110,13 +110,13 @@ export function ContributionDialog({
     e.preventDefault()
     if (!gift) return
 
-    // Get display amount (what user sees)
-    const displayAmount = customAmount ? Math.round(parseFloat(customAmount)) : amount
+    // Get amount in user's selected currency (what user sees and enters)
+    const amountInUserCurrency = customAmount ? Math.round(parseFloat(customAmount)) : amount
     
-    // Convert to JPY for API
-    const finalAmountJpy = selectedCurrency === CURRENCY.JPY
-      ? Math.round(displayAmount)
-      : convertToJpy(displayAmount * 100, selectedCurrency, exchangeRates)
+    // Convert to JPY for storage in database
+    const amountInJpy = selectedCurrency === CURRENCY.JPY
+      ? Math.round(amountInUserCurrency)
+      : convertToJpy(amountInUserCurrency * 100, selectedCurrency, exchangeRates)
 
     setIsSubmitting(true)
     setError('')
@@ -133,7 +133,8 @@ export function ContributionDialog({
         body: JSON.stringify({
           name,
           email,
-          amount: finalAmountJpy,
+          amount: amountInJpy,              // JPY for database storage
+          currency: selectedCurrency,       // User's selected currency (for email display)
           message: message || undefined,
         }),
       })
@@ -145,8 +146,8 @@ export function ContributionDialog({
       
       const data = await response.json()
       
-      // Store the display amount (what user saw)
-      setSubmittedAmount(displayAmount)
+      // Store the amount in user's currency for display in success message
+      setSubmittedAmount(amountInUserCurrency)
       setContributionId(data.contributionId)
       setIsSuccess(true)
       

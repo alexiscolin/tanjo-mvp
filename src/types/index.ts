@@ -17,15 +17,6 @@ export interface Gift {
   isOccasion?: boolean // second-hand item
 }
 
-export interface Reservation {
-  id: string
-  giftId: string
-  name: string
-  email: string
-  message?: string
-  createdAt: string
-}
-
 export interface Contribution {
   id: string
   giftId: string
@@ -34,6 +25,7 @@ export interface Contribution {
   amount: number // in yens (JPY)
   message?: string
   createdAt: string
+  cancelToken?: string // secure token for cancellation link
 }
 
 /**

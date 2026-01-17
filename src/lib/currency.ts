@@ -240,7 +240,8 @@ export function convertToJpy(
 // ============================================================================
 
 /**
- * Formats an amount in the specified currency
+ * Converts and formats an amount from JPY to the specified currency
+ * This is the main formatting function that handles both conversion and display.
  * @param jpy Amount in yens (base currency)
  * @param currency Display currency
  * @param rates Exchange rates from JPY

@@ -1,8 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { addContribution, getContributions } from '@/lib/google-sheets'
-import { sendContributionNotification, sendContributionConfirmation } from '@/lib/resend'
+import { addContribution, getContributions, getPaymentConfig } from '@/lib/google-sheets'
+import { sendContributionConfirmationEmail, sendContributionNotificationToAdmin } from '@/lib/resend'
 import { POOL_ID } from '@/lib/constants'
 import { isValidEmail, sanitizeName, sanitizeString, isValidPrice } from '@/lib/utils'
+import { getExchangeRates } from '@/lib/currency'
 
 // GET /api/pool/contributions - List all pool contributions
 export async function GET() {
@@ -31,10 +32,16 @@ export async function GET() {
 // POST /api/pool/contributions - Contribute to the global pool
 export async function POST(request: NextRequest) {
   try {
-    const { name, email, amount, message } = await request.json()
+    const { 
+      name, 
+      email, 
+      amount: amountInJpy, 
+      message, 
+      currency
+    } = await request.json()
     
     // Validation
-    if (!name || !email || amount === undefined || amount === null) {
+    if (!name || !email || amountInJpy === undefined || amountInJpy === null) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -48,7 +55,7 @@ export async function POST(request: NextRequest) {
       )
     }
     
-    if (!isValidPrice(amount) || amount < 100) {
+    if (!isValidPrice(amountInJpy) || amountInJpy < 100) {
       return NextResponse.json(
         { error: 'Invalid or too small amount (minimum 100 JPY)' },
         { status: 400 }
@@ -60,30 +67,36 @@ export async function POST(request: NextRequest) {
     const sanitizedMessage = sanitizeString(message || '')
     const sanitizedEmail = email.trim().toLowerCase()
     
-    // Save contribution to pool
-    const contributionId = await addContribution({ 
+    // Save contribution to pool (now returns { id, cancelToken })
+    const { id: contributionId, cancelToken } = await addContribution({ 
       giftId: POOL_ID, 
       name: sanitizedName, 
       email: sanitizedEmail, 
-      amount, 
+      amount: amountInJpy, 
       message: sanitizedMessage 
     })
+    
+    // Get payment config for emails
+    const paymentConfig = await getPaymentConfig()
+    
+    // Get exchange rates for currency conversion in emails
+    const exchangeRates = await getExchangeRates()
     
     // Send emails (don't crash if it fails)
     try {
       const emailData = {
-        giftTitle: 'Contribution libre',
+        giftId: 'POOL' as const,
         contributorName: sanitizedName,
         contributorEmail: sanitizedEmail,
-        amount,
-        message: sanitizedMessage,
-        totalCollected: amount, // No total tracking for pool
-        goal: 0, // Pool has no goal
+        amountInJpy,
+        currency: currency || 'JPY', // Default to JPY if not provided
+        message: sanitizedMessage || undefined,
+        cancelToken,
       }
       
       await Promise.all([
-        sendContributionNotification(emailData),
-        sendContributionConfirmation(emailData),
+        sendContributionConfirmationEmail(emailData, paymentConfig, exchangeRates),
+        sendContributionNotificationToAdmin(emailData),
       ])
     } catch (emailError) {
       console.error('Email sending error (non-blocking):', emailError)
@@ -92,7 +105,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ 
       success: true,
       contributionId,
-      newTotal: amount,
+      newTotal: amountInJpy,
       percentage: 0,
     })
   } catch (error) {

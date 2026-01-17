@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
 import { ArrowLeft, Search, Users, TrendingUp, DollarSign } from 'lucide-react'
 import Link from 'next/link'
+import { formatJpy } from '@/lib/currency'
 
 interface EnrichedContribution {
   id: string
@@ -68,8 +69,6 @@ export default function ContributionsPage() {
     setFilteredContributions(filtered)
   }
 
-  const formatPrice = (jpy: number) => `¥${jpy.toLocaleString('ja-JP')}`
-
   // Calculate statistics
   const totalAmount = contributions.reduce((sum, c) => sum + c.amount, 0)
   const uniqueContributors = new Set(contributions.map(c => c.email)).size
@@ -116,7 +115,7 @@ export default function ContributionsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Total collecté</p>
-                <p className="text-2xl font-bold text-rose-600">{formatPrice(totalAmount)}</p>
+                <p className="text-2xl font-bold text-rose-600">{formatJpy(totalAmount)}</p>
               </div>
               <DollarSign className="h-8 w-8 text-rose-500 opacity-50" />
             </div>
@@ -136,7 +135,7 @@ export default function ContributionsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Montant moyen</p>
-                <p className="text-2xl font-bold text-green-600">{formatPrice(averageAmount)}</p>
+                <p className="text-2xl font-bold text-green-600">{formatJpy(averageAmount)}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-green-500 opacity-50" />
             </div>
@@ -205,7 +204,7 @@ export default function ContributionsPage() {
                       <td className="px-4 py-3 text-sm text-muted-foreground">{contrib.email}</td>
                       <td className="px-4 py-3 text-sm">{contrib.giftTitle}</td>
                       <td className="px-4 py-3 text-sm font-semibold text-right text-rose-600">
-                        {formatPrice(contrib.amount)}
+                        {formatJpy(contrib.amount)}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate">
                         {contrib.message || '-'}

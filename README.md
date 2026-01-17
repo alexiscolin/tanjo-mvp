@@ -72,8 +72,10 @@ ID | ID Cadeau | Nom | Email | Message | Date
 
 **Sheet "Contributions"**:
 ```
-ID | ID Cadeau | Nom | Email | Montant | Message | Date
+ID | ID Cadeau | Nom | Email | Montant | Message | Date | CancelToken
 ```
+
+> 💡 **Note**: The `CancelToken` column is automatically generated. It contains a secure token allowing contributors to cancel their contribution via a unique link.
 
 **Sheet "Config"**:
 ```
@@ -147,11 +149,34 @@ ADMIN_PASSWORD=your_secure_password_here
 
 ```env
 RESEND_API_KEY=re_xxxxxxxxxxxx
-FROM_EMAIL="Baby Registry <onboarding@resend.dev>"
+FROM_EMAIL="Baby Registry <hello@yourdomain.com>"
+REPLY_TO_EMAIL="contact@yourdomain.com"  # Optional: email for replies
 ADMIN_EMAIL=your@email.com
+
+# Site URL for email links (cancellation, etc.)
+NEXT_PUBLIC_SITE_URL=https://your-site.netlify.app
+SITE_URL=https://your-site.netlify.app
 ```
 
 > In free mode, you can only send to your own email. Add a verified domain to send to everyone.
+
+#### Email Features
+
+The app sends beautiful, enriched emails:
+
+**To Contributors:**
+- 🎁 **Confirmation email** with gift photo, amount, and progress
+- 💳 **Payment instructions** (PayPal, Wero, PayPay) directly in the email
+- 🔗 **Cancellation link** to cancel their contribution if needed
+
+**To Admins:**
+- 📩 **Notification email** with contributor details (name, email, amount, message)
+- ❌ **Cancellation alerts** when someone cancels, with their feedback
+
+**Cancellation Page:**
+- Contributors can cancel via a unique secure link (`/cancel/[token]`)
+- Optional feedback form to understand why they cancelled
+- Confirmation emails sent to both contributor and admin
 
 ---
 
@@ -168,6 +193,9 @@ tanjo-mvp/
 │   │   │   ├── page.tsx                  # Admin dashboard
 │   │   │   └── contributions/
 │   │   │       └── page.tsx              # View all contributions
+│   │   ├── cancel/
+│   │   │   └── [token]/
+│   │   │       └── page.tsx              # Public cancellation page
 │   │   └── api/
 │   │       ├── gifts/                    # Gifts CRUD
 │   │       │   ├── route.ts              # GET all / POST new
@@ -179,6 +207,9 @@ tanjo-mvp/
 │   │       │   ├── route.ts              # GET all contributions
 │   │       │   └── [id]/
 │   │       │       └── route.ts          # DELETE contribution (cancel)
+│   │       ├── cancel/
+│   │       │   └── [token]/
+│   │       │       └── route.ts          # GET info / DELETE by cancel token
 │   │       ├── pool/
 │   │       │   └── contributions/
 │   │       │       └── route.ts          # Free contribution pool
@@ -328,6 +359,12 @@ Configure your payment details in the Google Sheet `Config` tab (lines 12-18). Y
 
 **Q: Is payment processing automatic?**
 A: No. This app doesn't process payments - it just displays your payment details to contributors. They manually send money via Wero, bank transfer, or PayPay. You validate contributions manually.
+
+**Q: Can contributors cancel their contribution?**
+A: Yes! Each contributor receives an email with a unique cancellation link. They can click it anytime to cancel and optionally provide feedback. You'll receive a notification email when someone cancels.
+
+**Q: What happens when someone cancels?**
+A: The contribution is removed from Google Sheets, the pot amount is updated, and both the contributor and admin receive confirmation emails.
 
 ---
 

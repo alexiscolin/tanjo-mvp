@@ -1,7 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { addContribution, getGifts, getContributions } from '@/lib/google-sheets'
-import { sendContributionNotification, sendContributionConfirmation } from '@/lib/resend'
+import { addContribution, getGifts, getContributions, getPaymentConfig } from '@/lib/google-sheets'
+import { sendContributionConfirmationEmail, sendContributionNotificationToAdmin } from '@/lib/resend'
 import { isValidEmail, sanitizeName, sanitizeString, isValidPrice } from '@/lib/utils'
+import { getExchangeRates } from '@/lib/currency'
 
 // GET /api/gifts/[id]/contributions - List all contributors for a gift
 export async function GET(
@@ -38,10 +39,16 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const { name, email, amount, message } = await request.json()
+    const { 
+      name, 
+      email, 
+      amount: amountInJpy, 
+      message, 
+      currency
+    } = await request.json()
     
     // Validation
-    if (!name || !email || amount === undefined || amount === null) {
+    if (!name || !email || amountInJpy === undefined || amountInJpy === null) {
       return NextResponse.json(
         { error: 'Missing required fields' },
         { status: 400 }
@@ -55,7 +62,7 @@ export async function POST(
       )
     }
     
-    if (!isValidPrice(amount) || amount < 100) {
+    if (!isValidPrice(amountInJpy) || amountInJpy < 100) {
       return NextResponse.json(
         { error: 'Invalid or too small amount (minimum 100 JPY)' },
         { status: 400 }
@@ -86,33 +93,43 @@ export async function POST(
       )
     }
     
-    // Save contribution
-    const contributionId = await addContribution({ 
+    // Save contribution (now returns { id, cancelToken })
+    const { id: contributionId, cancelToken } = await addContribution({ 
       giftId: id, 
       name: sanitizedName, 
       email: sanitizedEmail, 
-      amount, 
+      amount: amountInJpy, 
       message: sanitizedMessage 
     })
     
     // Calculate new total
-    const newTotal = (gift.potCurrentAmount || 0) + amount
+    const newTotal = (gift.potCurrentAmount || 0) + amountInJpy
+    
+    // Get payment config for emails
+    const paymentConfig = await getPaymentConfig()
+    
+    // Get exchange rates for currency conversion in emails
+    const exchangeRates = await getExchangeRates()
     
     // Send emails (don't crash if it fails)
     try {
       const emailData = {
+        giftId: id,
         giftTitle: gift.title,
+        giftImageUrl: gift.imageUrl || undefined,
         contributorName: sanitizedName,
         contributorEmail: sanitizedEmail,
-        amount,
-        message: sanitizedMessage,
+        amountInJpy,              // JPY for database storage
+        currency: currency || currency.JPY,
+        message: sanitizedMessage || undefined,
         totalCollected: newTotal,
         goal: gift.price,
+        cancelToken,
       }
       
       await Promise.all([
-        sendContributionNotification(emailData),
-        sendContributionConfirmation(emailData),
+        sendContributionConfirmationEmail(emailData, paymentConfig, exchangeRates),
+        sendContributionNotificationToAdmin(emailData),
       ])
     } catch (emailError) {
       console.error('Email sending error (non-blocking):', emailError)

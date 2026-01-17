@@ -6,6 +6,7 @@ import { Button } from '@/components/ui/button'
 import { PaymentConfig } from '@/types'
 import { Copy, Check, Smartphone, QrCode, ExternalLink, Eye, EyeOff } from 'lucide-react'
 import { type Currency, CURRENCY } from '@/lib/currency'
+import { deobfuscatePhone } from '@/lib/utils'
 
 interface PaymentInstructionsProps {
   amount: number // in whole units (14€, 2500¥)
@@ -31,17 +32,7 @@ export function PaymentInstructions({
       ? `${amount.toFixed(2)}€`
       : `$${amount.toFixed(2)}`
 
-  // Deobfuscate phone number: base64 decode + reverse
-  const deobfuscatePhone = (obfuscated: string): string => {
-    try {
-      const decoded = atob(obfuscated)
-      return decoded.split('').reverse().join('')
-    } catch {
-      return obfuscated // Fallback if not encoded
-    }
-  }
-
-  // Get the actual phone number (decoded)
+  // Get the actual phone number (decoded from utils)
   const actualPhone = paymentConfig.weroPhone ? deobfuscatePhone(paymentConfig.weroPhone) : ''
 
   // Anti-bot delay: enable reveal button after 2 seconds
@@ -83,13 +74,13 @@ export function PaymentInstructions({
       <div className="space-y-4">
         <div className="text-center">
           <QrCode className="h-12 w-12 mx-auto text-red-500 mb-2" />
-          <h3 className="font-semibold text-lg">PayPayで支払う</h3>
+          <h3 className="font-semibold text-lg">Pay with PayPay</h3>
           <p className="text-sm text-muted-foreground">
-            以下のQRコードをスキャンするか、IDで送金してください
+            Scan the QR code below or send money using the ID
           </p>
         </div>
 
-        <CopyButton text={formattedAmount} field="amount" label="金額" />
+        <CopyButton text={formattedAmount} field="amount" label="Amount" />
         
         {paymentConfig.paypayId && (
           <CopyButton text={paymentConfig.paypayId} field="paypayId" label="PayPay Link" />
@@ -112,12 +103,12 @@ export function PaymentInstructions({
         )}
 
         <div className="text-sm text-muted-foreground space-y-1 p-3 bg-amber-50 rounded-lg">
-          <p className="font-medium text-amber-800">手順:</p>
+          <p className="font-medium text-amber-800">Instructions:</p>
           <ol className="list-decimal list-inside space-y-1 text-amber-700">
-            <li>PayPayアプリを開く</li>
-            <li>「送る」をタップ</li>
-            <li>QRコードをスキャンするかIDを入力</li>
-            <li>金額を入力して送金</li>
+            <li>Open the PayPay app</li>
+            <li>Tap &quot;Send&quot;</li>
+            <li>Scan the QR code or enter the ID</li>
+            <li>Enter the amount and send</li>
           </ol>
         </div>
       </div>

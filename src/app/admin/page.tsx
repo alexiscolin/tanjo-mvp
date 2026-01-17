@@ -31,6 +31,7 @@ import {
 } from 'lucide-react'
 import Link from 'next/link'
 import { ImagePicker } from '@/components/image-picker'
+import { formatJpy } from '@/lib/currency'
 
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false)
@@ -225,8 +226,6 @@ export default function AdminPage() {
     })
     setEditingGift(gift)
   }
-
-  const formatPrice = (jpy: number) => `¥${jpy.toLocaleString('ja-JP')}`
   
   // Filter gifts by category, occasion, and availability
   const filteredGifts = gifts
@@ -394,7 +393,14 @@ export default function AdminPage() {
                     </div>
                   )}
                   {gift.isReserved && (
-                    <Badge className="absolute top-2 right-2 bg-green-500">Réservé</Badge>
+                    <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
+                      <Badge className="bg-green-500">Réservé</Badge>
+                      {gift.reservedBy && (
+                        <Badge variant="secondary" className="text-xs">
+                          {gift.reservedBy}
+                        </Badge>
+                      )}
+                    </div>
                   )}
                   {gift.isPot && (
                     <Badge className="absolute top-2 left-2 bg-amber-500">Cagnotte</Badge>
@@ -409,7 +415,7 @@ export default function AdminPage() {
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{gift.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-rose-500">{formatPrice(gift.price)}</span>
+                    <span className="font-semibold text-rose-500">{formatJpy(gift.price)}</span>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon-sm" onClick={() => openEditDialog(gift)}>
                         <Pencil className="h-4 w-4" />

@@ -42,3 +42,50 @@ export function sanitizeName(name: string): string {
 export function isValidPrice(price: number): boolean {
   return typeof price === 'number' && price > 0 && isFinite(price)
 }
+
+/**
+ * Deobfuscate phone number
+ * Phone numbers are stored obfuscated (reversed + base64) to prevent scraping
+ * @param obfuscated - Base64 encoded reversed phone number
+ * @returns Original phone number
+ */
+export function deobfuscatePhone(obfuscated: string): string {
+  if (!obfuscated) return ''
+  
+  try {
+    // For Node.js (server-side)
+    if (typeof Buffer !== 'undefined') {
+      const decoded = Buffer.from(obfuscated, 'base64').toString('utf-8')
+      return decoded.split('').reverse().join('')
+    }
+    
+    // For browser (client-side)
+    const decoded = atob(obfuscated)
+    return decoded.split('').reverse().join('')
+  } catch {
+    return obfuscated // Fallback if not encoded
+  }
+}
+
+/**
+ * Obfuscate phone number for storage
+ * @param phone - Plain phone number
+ * @returns Base64 encoded reversed phone number
+ */
+export function obfuscatePhone(phone: string): string {
+  if (!phone) return ''
+  
+  try {
+    const reversed = phone.split('').reverse().join('')
+    
+    // For Node.js (server-side)
+    if (typeof Buffer !== 'undefined') {
+      return Buffer.from(reversed).toString('base64')
+    }
+    
+    // For browser (client-side)
+    return btoa(reversed)
+  } catch {
+    return phone
+  }
+}

@@ -1,6 +1,17 @@
 import { google } from 'googleapis'
-import type { Gift, Reservation, Contribution, ListInfo, AppConfig, PaymentConfig } from '@/types'
+import crypto from 'crypto'
+import type { Gift, Contribution, ListInfo, AppConfig, PaymentConfig } from '@/types'
 import { DEFAULT_CONFIG } from './constants'
+
+/**
+ * Generate a secure cancellation token
+ * Uses contribution ID + timestamp + random bytes for uniqueness
+ */
+export function generateCancelToken(): string {
+  const timestamp = Date.now().toString(36)
+  const randomPart = crypto.randomBytes(16).toString('hex')
+  return `${timestamp}-${randomPart}`
+}
 
 // Google Sheets configuration
 const SPREADSHEET_ID = process.env.GOOGLE_SPREADSHEET_ID || ''
@@ -10,7 +21,6 @@ const GOOGLE_PRIVATE_KEY = process.env.GOOGLE_PRIVATE_KEY?.replace(/\\n/g, '\n')
 // Sheet names
 const SHEETS = {
   GIFTS: 'Cadeaux',
-  RESERVATIONS: 'Reservations',
   CONTRIBUTIONS: 'Contributions',
   CONFIG: 'Config',
 }
@@ -149,96 +159,6 @@ export async function deleteGift(id: string): Promise<void> {
   })
 }
 
-// ==================== RESERVATIONS ====================
-
-export async function addReservation(reservation: Omit<Reservation, 'id' | 'createdAt'>): Promise<string> {
-  const sheets = await getSheets()
-  const id = `res_${Date.now()}`
-  const createdAt = new Date().toISOString()
-  
-  await sheets.spreadsheets.values.append({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.RESERVATIONS}!A:F`,
-    valueInputOption: 'USER_ENTERED',
-    requestBody: {
-      values: [[
-        id,
-        reservation.giftId,
-        reservation.name,
-        reservation.email,
-        reservation.message || '',
-        createdAt,
-      ]],
-    },
-  })
-  
-  // Mark gift as reserved
-  await updateGift(reservation.giftId, {
-    isReserved: true,
-    reservedBy: reservation.name,
-    reservedEmail: reservation.email,
-    reservedAt: createdAt,
-  })
-  
-  return id
-}
-
-export async function getReservations(giftId?: string): Promise<Reservation[]> {
-  const sheets = await getSheets()
-  
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.RESERVATIONS}!A2:F`,
-  })
-
-  const rows = response.data.values || []
-  
-  const reservations = rows.map((row): Reservation => ({
-    id: row[0] || '',
-    giftId: row[1] || '',
-    name: row[2] || '',
-    email: row[3] || '',
-    message: row[4] || undefined,
-    createdAt: row[5] || new Date().toISOString(),
-  }))
-  
-  if (giftId) {
-    return reservations.filter(r => r.giftId === giftId)
-  }
-  
-  return reservations
-}
-
-export async function deleteReservation(id: string): Promise<void> {
-  const sheets = await getSheets()
-  const reservations = await getReservations()
-  const reservation = reservations.find(r => r.id === id)
-  
-  if (!reservation) throw new Error('Reservation not found')
-  
-  const rowIndex = reservations.findIndex(r => r.id === id)
-  if (rowIndex === -1) throw new Error('Reservation not found')
-  
-  // Clear the row
-  const row = rowIndex + 2
-  await sheets.spreadsheets.values.update({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.RESERVATIONS}!A${row}:F${row}`,
-    valueInputOption: 'USER_ENTERED',
-    requestBody: {
-      values: [['', '', '', '', '', '']],
-    },
-  })
-  
-  // Mark gift as not reserved
-  await updateGift(reservation.giftId, {
-    isReserved: false,
-    reservedBy: undefined,
-    reservedEmail: undefined,
-    reservedAt: undefined,
-  })
-}
-
 // ==================== CONTRIBUTIONS ====================
 
 export async function getContributions(giftId?: string): Promise<Contribution[]> {
@@ -246,20 +166,23 @@ export async function getContributions(giftId?: string): Promise<Contribution[]>
   
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.CONTRIBUTIONS}!A2:G`,
+    range: `${SHEETS.CONTRIBUTIONS}!A2:H`, // Extended to include cancelToken (column H)
   })
 
   const rows = response.data.values || []
   
-  const contributions = rows.map((row): Contribution => ({
-    id: row[0] || '',
-    giftId: row[1] || '',
-    name: row[2] || '',
-    email: row[3] || '',
-    amount: parseInt(row[4]) || 0,
-    message: row[5] || undefined,
-    createdAt: row[6] || new Date().toISOString(),
-  }))
+  const contributions = rows
+    .filter(row => row[0] && row[1]) // Filter out empty rows (no id or giftId)
+    .map((row): Contribution => ({
+      id: row[0] || '',
+      giftId: row[1] || '',
+      name: row[2] || '',
+      email: row[3] || '',
+      amount: parseInt(row[4]) || 0,
+      message: row[5] || undefined,
+      createdAt: row[6] || new Date().toISOString(),
+      cancelToken: row[7] || undefined,
+    }))
   
   // Filter by giftId if provided
   if (giftId) {
@@ -269,14 +192,28 @@ export async function getContributions(giftId?: string): Promise<Contribution[]>
   return contributions
 }
 
-export async function addContribution(contribution: Omit<Contribution, 'id' | 'createdAt'>): Promise<string> {
+/**
+ * Find a contribution by its cancellation token
+ */
+export async function getContributionByCancelToken(cancelToken: string): Promise<Contribution | null> {
+  const contributions = await getContributions()
+  return contributions.find(c => c.cancelToken === cancelToken) || null
+}
+
+export interface AddContributionResult {
+  id: string
+  cancelToken: string
+}
+
+export async function addContribution(contribution: Omit<Contribution, 'id' | 'createdAt' | 'cancelToken'>): Promise<AddContributionResult> {
   const sheets = await getSheets()
   const id = `contrib_${Date.now()}`
   const createdAt = new Date().toISOString()
+  const cancelToken = generateCancelToken()
   
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.CONTRIBUTIONS}!A:G`,
+    range: `${SHEETS.CONTRIBUTIONS}!A:H`,
     valueInputOption: 'USER_ENTERED',
     requestBody: {
       values: [[
@@ -287,25 +224,35 @@ export async function addContribution(contribution: Omit<Contribution, 'id' | 'c
         contribution.amount,
         contribution.message || '',
         createdAt,
+        cancelToken,
       ]],
     },
   })
   
-  // Update pot amount
+  // Update pot amount and reservation status
   const gifts = await getGifts()
   const gift = gifts.find(g => g.id === contribution.giftId)
   if (gift) {
     const newAmount = (gift.potCurrentAmount || 0) + contribution.amount
+    
+    // For pots: reserve when goal is reached
+    // For non-pots: reserve immediately when someone contributes
+    const isNowReserved = gift.isPot 
+      ? newAmount >= gift.price 
+      : true // Always reserve non-pot gifts
+    
     await updateGift(contribution.giftId, {
       potCurrentAmount: newAmount,
-      isReserved: newAmount >= gift.price, // Reserved if goal reached
+      isReserved: isNowReserved,
+      // Set reservedBy when gift becomes reserved
+      reservedBy: isNowReserved ? contribution.name : gift.reservedBy,
     })
   }
   
-  return id
+  return { id, cancelToken }
 }
 
-export async function deleteContribution(id: string): Promise<void> {
+export async function deleteContribution(id: string): Promise<Contribution> {
   const sheets = await getSheets()
   const contributions = await getContributions()
   const contribution = contributions.find(c => c.id === id)
@@ -319,23 +266,46 @@ export async function deleteContribution(id: string): Promise<void> {
   const row = rowIndex + 2 // +2 because of header + index 0
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.CONTRIBUTIONS}!A${row}:G${row}`,
+    range: `${SHEETS.CONTRIBUTIONS}!A${row}:H${row}`,
     valueInputOption: 'USER_ENTERED',
     requestBody: {
-      values: [['', '', '', '', '', '', '']],
+      values: [['', '', '', '', '', '', '', '']],
     },
   })
   
   // Update pot amount (subtract the contribution)
   const gifts = await getGifts()
   const gift = gifts.find(g => g.id === contribution.giftId)
-  if (gift && gift.isPot) {
-    const newAmount = Math.max(0, (gift.potCurrentAmount || 0) - contribution.amount)
-    await updateGift(contribution.giftId, {
-      potCurrentAmount: newAmount,
-      isReserved: newAmount >= gift.price,
-    })
+  if (gift) {
+    if (gift.isPot) {
+      // For pot gifts, update the current amount and reservation status
+      const newAmount = Math.max(0, (gift.potCurrentAmount || 0) - contribution.amount)
+      const isStillReserved = newAmount >= gift.price
+      await updateGift(contribution.giftId, {
+        potCurrentAmount: newAmount,
+        isReserved: isStillReserved,
+        reservedBy: isStillReserved ? gift.reservedBy : undefined,
+      })
+    } else {
+      // For non-pot gifts (full reservations), simply unreserve when cancelled
+      await updateGift(contribution.giftId, {
+        potCurrentAmount: 0,
+        isReserved: false,
+        reservedBy: undefined,
+      })
+    }
   }
+  
+  return contribution
+}
+
+/**
+ * Delete a contribution by its cancellation token
+ */
+export async function deleteContributionByCancelToken(cancelToken: string): Promise<Contribution> {
+  const contribution = await getContributionByCancelToken(cancelToken)
+  if (!contribution) throw new Error('Contribution not found')
+  return deleteContribution(contribution.id)
 }
 
 // ==================== CONFIG ====================
