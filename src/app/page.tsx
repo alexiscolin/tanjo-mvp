@@ -6,15 +6,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { GiftCard } from '@/components/gift-card'
 import { FreeContributionCard } from '@/components/free-contribution-card'
-import { ReserveDialog } from '@/components/reserve-dialog'
-import { ContributeDialog } from '@/components/contribute-dialog'
+import { ContributionDialog } from '@/components/contribution-dialog'
 import { CurrencySelector } from '@/components/currency-selector'
 import type { Gift, GiftCategory, ListInfo } from '@/types'
 import { categoryLabels } from '@/types'
 import { Heart, Calendar, Gift as GiftIcon, Loader2, Settings } from 'lucide-react'
 import Link from 'next/link'
 import { type Currency, type ExchangeRates, detectPreferredCurrency } from '@/lib/currency'
-import { FREE_CONTRIBUTION_ID, FREE_CONTRIBUTION_PRICE } from '@/lib/constants'
+import { POOL_ID } from '@/lib/constants'
 
 const categories: (GiftCategory | 'all')[] = ['all', 'chambre', 'vetements', 'repas', 'bain', 'transport', 'jouets', 'experiences', 'autre']
 
@@ -35,7 +34,7 @@ export default function HomePage() {
       const [giftsResponse, ratesResponse, freeContribResponse] = await Promise.all([
         fetch('/api/gifts'),
         fetch('/api/exchange-rate'),
-        fetch(`/api/gifts/${FREE_CONTRIBUTION_ID}/contributions`).catch(() => ({ json: () => ({ contributions: [] }) }))
+        fetch(`/api/gifts/${POOL_ID}/contributions`).catch(() => ({ json: () => ({ contributions: [] }) }))
       ])
       
       const giftsData = await giftsResponse.json()
@@ -90,10 +89,10 @@ export default function HomePage() {
   return (
     <div className="min-h-screen">
       {/* Hero / Header */}
-      <header className="relative overflow-hidden bg-gradient-to-br from-rose-50 via-pink-50 to-white">
+      <header className="relative overflow-hidden bg-linear-to-br from-rose-50 via-pink-50 to-white">
         {/* Background pattern */}
         <div className="absolute inset-0 opacity-30">
-          <div className="absolute inset-0 bg-[radial-gradient(#fda4af_1px,transparent_1px)] [background-size:24px_24px]" />
+          <div className="absolute inset-0 bg-[radial-gradient(#fda4af_1px,transparent_1px)] bg-size-[24px_24px]" />
         </div>
         
         <div className="relative container mx-auto px-4 md:px-6 py-12 md:py-20">
@@ -218,10 +217,10 @@ export default function HomePage() {
                   onContribute={() => {
                     // Create a fake gift for free contribution
                     const fakeGift: Gift = {
-                      id: FREE_CONTRIBUTION_ID,
+                      id: POOL_ID,
                       title: listInfo.freeContributionTitle || 'Contribution libre 💝',
                       description: 'Montant libre pour nous aider',
-                      price: FREE_CONTRIBUTION_PRICE, // Very high so there's no "goal"
+                      price: 0, // Pool has no target price
                       imageUrl: '',
                       category: 'autre',
                       isPot: true,
@@ -258,21 +257,23 @@ export default function HomePage() {
       </footer>
 
       {/* Dialogs */}
-      <ReserveDialog
+      <ContributionDialog
         gift={reserveGift}
         open={!!reserveGift}
         onOpenChange={(open) => !open && setReserveGift(null)}
         onSuccess={fetchGifts}
         selectedCurrency={selectedCurrency}
         exchangeRates={exchangeRates}
+        mode="reserve"
       />
-      <ContributeDialog
+      <ContributionDialog
         gift={contributeGift}
         open={!!contributeGift}
         onOpenChange={(open) => !open && setContributeGift(null)}
         onSuccess={fetchGifts}
         selectedCurrency={selectedCurrency}
         exchangeRates={exchangeRates}
+        mode="contribute"
       />
     </div>
   )

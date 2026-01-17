@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { updateGift, deleteGift } from '@/lib/google-sheets'
 
-// PUT /api/gifts/[id] - Update a gift
-export async function PUT(
+// PATCH /api/gifts/[id] - Update a gift (partial update)
+export async function PATCH(
   request: NextRequest,
   { params }: { params: Promise<{ id: string }> }
 ) {

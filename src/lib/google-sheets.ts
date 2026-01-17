@@ -1,5 +1,5 @@
 import { google } from 'googleapis'
-import type { Gift, Reservation, Contribution, ListInfo, AppConfig } from '@/types'
+import type { Gift, Reservation, Contribution, ListInfo, AppConfig, PaymentConfig } from '@/types'
 import { DEFAULT_CONFIG } from './constants'
 
 // Google Sheets configuration
@@ -148,7 +148,7 @@ export async function deleteGift(id: string): Promise<void> {
 
 // ==================== RESERVATIONS ====================
 
-export async function addReservation(reservation: Omit<Reservation, 'id' | 'createdAt'>): Promise<void> {
+export async function addReservation(reservation: Omit<Reservation, 'id' | 'createdAt'>): Promise<string> {
   const sheets = await getSheets()
   const id = `res_${Date.now()}`
   const createdAt = new Date().toISOString()
@@ -175,6 +175,64 @@ export async function addReservation(reservation: Omit<Reservation, 'id' | 'crea
     reservedBy: reservation.name,
     reservedEmail: reservation.email,
     reservedAt: createdAt,
+  })
+  
+  return id
+}
+
+export async function getReservations(giftId?: string): Promise<Reservation[]> {
+  const sheets = await getSheets()
+  
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.RESERVATIONS}!A2:F`,
+  })
+
+  const rows = response.data.values || []
+  
+  const reservations = rows.map((row): Reservation => ({
+    id: row[0] || '',
+    giftId: row[1] || '',
+    name: row[2] || '',
+    email: row[3] || '',
+    message: row[4] || undefined,
+    createdAt: row[5] || new Date().toISOString(),
+  }))
+  
+  if (giftId) {
+    return reservations.filter(r => r.giftId === giftId)
+  }
+  
+  return reservations
+}
+
+export async function deleteReservation(id: string): Promise<void> {
+  const sheets = await getSheets()
+  const reservations = await getReservations()
+  const reservation = reservations.find(r => r.id === id)
+  
+  if (!reservation) throw new Error('Reservation not found')
+  
+  const rowIndex = reservations.findIndex(r => r.id === id)
+  if (rowIndex === -1) throw new Error('Reservation not found')
+  
+  // Clear the row
+  const row = rowIndex + 2
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.RESERVATIONS}!A${row}:F${row}`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: [['', '', '', '', '', '']],
+    },
+  })
+  
+  // Mark gift as not reserved
+  await updateGift(reservation.giftId, {
+    isReserved: false,
+    reservedBy: undefined,
+    reservedEmail: undefined,
+    reservedAt: undefined,
   })
 }
 
@@ -208,7 +266,7 @@ export async function getContributions(giftId?: string): Promise<Contribution[]>
   return contributions
 }
 
-export async function addContribution(contribution: Omit<Contribution, 'id' | 'createdAt'>): Promise<void> {
+export async function addContribution(contribution: Omit<Contribution, 'id' | 'createdAt'>): Promise<string> {
   const sheets = await getSheets()
   const id = `contrib_${Date.now()}`
   const createdAt = new Date().toISOString()
@@ -238,6 +296,41 @@ export async function addContribution(contribution: Omit<Contribution, 'id' | 'c
     await updateGift(contribution.giftId, {
       potCurrentAmount: newAmount,
       isReserved: newAmount >= gift.price, // Reserved if goal reached
+    })
+  }
+  
+  return id
+}
+
+export async function deleteContribution(id: string): Promise<void> {
+  const sheets = await getSheets()
+  const contributions = await getContributions()
+  const contribution = contributions.find(c => c.id === id)
+  
+  if (!contribution) throw new Error('Contribution not found')
+  
+  const rowIndex = contributions.findIndex(c => c.id === id)
+  if (rowIndex === -1) throw new Error('Contribution not found')
+  
+  // Clear the row
+  const row = rowIndex + 2 // +2 because of header + index 0
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.CONTRIBUTIONS}!A${row}:G${row}`,
+    valueInputOption: 'USER_ENTERED',
+    requestBody: {
+      values: [['', '', '', '', '', '', '']],
+    },
+  })
+  
+  // Update pot amount (subtract the contribution)
+  const gifts = await getGifts()
+  const gift = gifts.find(g => g.id === contribution.giftId)
+  if (gift && gift.isPot) {
+    const newAmount = Math.max(0, (gift.potCurrentAmount || 0) - contribution.amount)
+    await updateGift(contribution.giftId, {
+      potCurrentAmount: newAmount,
+      isReserved: newAmount >= gift.price,
     })
   }
 }
@@ -297,5 +390,38 @@ export async function getAppConfig(): Promise<AppConfig> {
       minContributionJpy: DEFAULT_CONFIG.MIN_CONTRIBUTION_JPY,
       suggestedContributionsJpy: [...DEFAULT_CONFIG.SUGGESTED_CONTRIBUTIONS_JPY],
     }
+  }
+}
+
+export async function getPaymentConfig(): Promise<PaymentConfig> {
+  const sheets = await getSheets()
+  
+  try {
+    const response = await sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEETS.CONFIG}!B12:B15`,
+    })
+
+    const values = response.data.values || []
+    
+    // Obfuscate phone number: reverse + base64
+    const obfuscatePhone = (phone: string) => {
+      if (!phone) return undefined
+      const reversed = phone.split('').reverse().join('')
+      return Buffer.from(reversed).toString('base64')
+    }
+    
+    return {
+      // Europe - Wero (phone number obfuscated)
+      weroPhone: obfuscatePhone(values[0]?.[0]),
+      // Japon - PayPay
+      paypayId: values[1]?.[0] || undefined,
+      paypayQrUrl: values[2]?.[0] || undefined,
+      // International - PayPal
+      paypalMeUsername: values[3]?.[0] || undefined,
+    }
+  } catch (error) {
+    console.warn('Payment config not found:', error)
+    return {}
   }
 }

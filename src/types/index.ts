@@ -74,3 +74,13 @@ export interface AppConfig {
   minContributionJpy: number
   suggestedContributionsJpy: number[]
 }
+
+export interface PaymentConfig {
+  // Europe - Wero (P2P mobile) - obfuscated server-side
+  weroPhone?: string
+  // Japon - PayPay
+  paypayId?: string
+  paypayQrUrl?: string
+  // International - PayPal
+  paypalMeUsername?: string
+}

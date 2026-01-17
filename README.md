@@ -9,6 +9,7 @@ A simple and elegant baby registry built with Next.js, Google Sheets, and Resend
 - 🎁 **Gift reservations** with email notifications
 - 💵 **Collective pots** for expensive gifts (configurable thresholds)
 - 👥 **Contributors list** with transparency on pot progress
+- 💳 **Payment instructions** (Wero, Paypal, PayPay) with copy buttons & QR codes
 - 🖼️ **Smart image picker** - scrape images from product pages
 - 📧 **Email notifications** via Resend
 - 🎨 **Beautiful UI** with Tailwind CSS and Shadcn/ui
@@ -88,7 +89,19 @@ Titre contribution libre   | Contribution libre 💝
 Seuil cagnotte (¥)         | 18000
 Contribution min (¥)       | 500
 Contributions suggérées    | 1000,2500,5000,10000
+weroPhone                  | 06 12 34 56 78
+paypayId                   | votre_id_paypay
+paypayQrUrl                | https://url-vers-qr.png
+paypalMeUsername           | votrepseudo
 ```
+
+> 💡 **Note**: Column A contains the field names (Clé), Column B contains your values (Valeur).
+> Leave a field empty if you don't want to use that payment method or feature.
+
+---
+
+**Lines 1-11**: Basic configuration for your registry  
+**Lines 12-15**: Payment methods (optional, fill only what you need)
 
 > ⚠️ **Note**: Pot mode is now **enabled by default** on all gifts, allowing multiple contributors per gift.
 
@@ -147,33 +160,64 @@ ADMIN_EMAIL=your@email.com
 tanjo-mvp/
 ├── src/
 │   ├── app/
-│   │   ├── page.tsx              # Public page (gift list)
-│   │   ├── admin/page.tsx        # Admin backoffice
+│   │   ├── page.tsx                      # Public page (gift list)
+│   │   ├── layout.tsx                    # Root layout
+│   │   ├── globals.css                   # Global styles
+│   │   ├── admin/
+│   │   │   ├── page.tsx                  # Admin dashboard
+│   │   │   └── contributions/
+│   │   │       └── page.tsx              # View all contributions
 │   │   └── api/
-│   │       ├── gifts/            # CRUD gifts
+│   │       ├── gifts/                    # Gifts CRUD
+│   │       │   ├── route.ts              # GET all / POST new
 │   │       │   └── [id]/
-│   │       │       └── contributions/ # List contributors
-│   │       ├── reserve/          # Reservations
-│   │       ├── contribute/       # Contributions
-│   │       ├── exchange-rate/    # Exchange rates
-│   │       ├── scrape-images/    # Image scraping
-│   │       └── config/           # App configuration
+│   │       │       ├── route.ts          # GET/PUT/DELETE gift
+│   │       │       └── contributions/
+│   │       │           └── route.ts      # GET contributions / POST contribute
+│   │       ├── contributions/
+│   │       │   ├── route.ts              # GET all contributions
+│   │       │   └── [id]/
+│   │       │       └── route.ts          # DELETE contribution (cancel)
+│   │       ├── pool/
+│   │       │   └── contributions/
+│   │       │       └── route.ts          # Free contribution pool
+│   │       ├── exchange-rate/
+│   │       │   └── route.ts              # Get currency rates
+│   │       ├── scrape-images/
+│   │       │   └── route.ts              # Scrape images from URLs
+│   │       └── config/
+│   │           └── route.ts              # Get app config & payment methods
 │   ├── components/
-│   │   ├── ui/                   # Shadcn components
-│   │   ├── gift-card.tsx         # Gift display with pot progress
-│   │   ├── reserve-dialog.tsx
-│   │   ├── contribute-dialog.tsx
-│   │   ├── contributors-list.tsx # Show pot contributors
-│   │   ├── currency-selector.tsx
-│   │   └── image-picker.tsx      # Smart image picker with scraping
+│   │   ├── ui/                           # Shadcn UI components
+│   │   │   ├── button.tsx
+│   │   │   ├── card.tsx
+│   │   │   ├── dialog.tsx
+│   │   │   └── ...
+│   │   ├── gifts/
+│   │   │   ├── gift-card.tsx             # Gift display with pot progress
+│   │   │   └── gift-grid.tsx             # Grid layout for gifts
+│   │   ├── gift-card.tsx                 # Main gift card component
+│   │   ├── free-contribution-card.tsx    # Free contribution card
+│   │   ├── contribution-dialog.tsx       # Unified dialog (reserve/contribute)
+│   │   ├── contributors-list.tsx         # Show pot contributors
+│   │   ├── payment-instructions.tsx      # Wero/PayPal/PayPay instructions
+│   │   ├── currency-selector.tsx         # Currency switcher (JPY/EUR/USD)
+│   │   └── image-picker.tsx              # Smart image picker with scraping
 │   ├── lib/
-│   │   ├── google-sheets.ts      # Google Sheets API
-│   │   ├── resend.ts             # Email sending
-│   │   ├── currency.ts           # Currency conversion
-│   │   └── utils.ts
+│   │   ├── google-sheets.ts              # Google Sheets API client
+│   │   ├── resend.ts                     # Email sending via Resend
+│   │   ├── currency.ts                   # Currency conversion & detection
+│   │   ├── constants.ts                  # App constants
+│   │   └── utils.ts                      # Utility functions
 │   └── types/
-│       └── index.ts
-├── .env.example
+│       └── index.ts                      # TypeScript types
+├── public/                               # Static assets
+├── .env.example                          # Environment variables template
+├── .env.local                            # Your local env (gitignored)
+├── components.json                       # Shadcn UI config
+├── tailwind.config.ts                    # Tailwind configuration
+├── next.config.ts                        # Next.js configuration
+├── package.json
 └── README.md
 ```
 
@@ -190,7 +234,35 @@ For expensive gifts, enable **pot mode** to allow multiple people to contribute:
 - **Contributors list**: See who contributed and their messages
 - **Smart notifications**: Emails sent to admin and contributor after each contribution
 
-**Configuration**: All pot settings are in your Google Sheets `Config` tab (lines 8-10): pot threshold, minimum contribution, and suggested amounts.
+**Configuration**: All pot settings are in your Google Sheets `Config` tab (lines 9-11): pot threshold, minimum contribution, and suggested amounts.
+
+### Payment Instructions
+
+After a contribution, users automatically receive payment instructions based on their currency:
+
+**💳 PayPal (Recommended - International):**
+- Direct link to PayPal.me with pre-filled amount
+- Works worldwide
+- Note: Fees may apply if paying by card (free via PayPal balance or bank transfer)
+
+**🇪🇺 For Europe (EUR):**
+- **Wero** (P2P instant payment): Phone number protected with reveal button (anti-scraping)
+- Step-by-step instructions guide users through the payment process
+
+**🇯🇵 For Japan (JPY):**
+- **PayPay**: Display PayPay ID and/or QR code for easy scanning
+- QR code shown directly in the success dialog
+- Japanese language instructions
+
+**Configuration in Google Sheet `Config` tab (lines 12-15):**
+```
+B12: weroPhone        → Your Wero phone number (e.g., 06 12 34 56 78)
+B13: paypayId         → Your PayPay ID
+B14: paypayQrUrl      → URL to your PayPay QR code image
+B15: paypalMeUsername → Your PayPal.me username (e.g., johnsmith)
+```
+
+> 💡 **Tip**: You only need to fill in the payment methods you want to accept. The app automatically shows the right options based on the selected currency. PayPal is shown first as the recommended option.
 
 ### Smart Image Picker
 
@@ -243,6 +315,15 @@ A: In the admin, check "Mode Cagnotte" when creating/editing a gift. For gifts a
 
 **Q: Can I see who contributed to a pot?**
 A: Yes! Click "Voir les contributeurs" on any pot gift card. Emails are kept private.
+
+**Q: How do payment instructions work?**
+A: After someone contributes, they see payment instructions based on their currency:
+- **EUR**: Wero phone with copy buttons
+- **JPY**: PayPay ID + QR code
+Configure your payment details in the Google Sheet `Config` tab (lines 12-18). You only need to fill in the methods you accept.
+
+**Q: Is payment processing automatic?**
+A: No. This app doesn't process payments - it just displays your payment details to contributors. They manually send money via Wero, bank transfer, or PayPay. You validate contributions manually.
 
 ---
 

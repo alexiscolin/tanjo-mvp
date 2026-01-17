@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button'
 import { HandHeart, Sparkles } from 'lucide-react'
 import { type Currency, type ExchangeRates, formatCurrency } from '@/lib/currency'
 import { ContributorsList } from './contributors-list'
-import { FREE_CONTRIBUTION_ID } from '@/lib/constants'
+import { POOL_ID } from '@/lib/constants'
 
 interface FreeContributionCardProps {
   title: string
@@ -68,7 +68,7 @@ export function FreeContributionCard({
         {/* Contributors list */}
         {totalAmount > 0 && (
           <ContributorsList 
-            giftId={FREE_CONTRIBUTION_ID}
+            giftId={POOL_ID}
             giftTitle={title}
             isCompleted={false}
             selectedCurrency={selectedCurrency}

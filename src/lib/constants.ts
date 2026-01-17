@@ -3,14 +3,9 @@
  */
 
 /**
- * Special gift ID for free contributions (virtual pot)
+ * Special ID for global pool contributions
  */
-export const FREE_CONTRIBUTION_ID = 'FREE_CONTRIBUTION'
-
-/**
- * Fake price for free contribution pot (very high to never be reached)
- */
-export const FREE_CONTRIBUTION_PRICE = 999999999
+export const POOL_ID = 'POOL'
 
 /**
  * Default configuration values

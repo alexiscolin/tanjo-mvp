@@ -17,6 +17,10 @@ const sans = DM_Sans({
 export const metadata: Metadata = {
   title: "Notre Liste de Naissance",
   description: "Découvrez notre liste de naissance et offrez le cadeau parfait pour notre bébé !",
+  robots: {
+    index: false,
+    follow: false,
+  },
 };
 
 export default function RootLayout({

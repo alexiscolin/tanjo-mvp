@@ -1,6 +1,6 @@
 import { NextResponse } from 'next/server'
 import { getContributions, getGifts } from '@/lib/google-sheets'
-import { FREE_CONTRIBUTION_ID } from '@/lib/constants'
+import { POOL_ID } from '@/lib/constants'
 
 export async function GET() {
   try {
@@ -13,7 +13,7 @@ export async function GET() {
     const enrichedContributions = contributions.map(contrib => {
       let giftTitle = 'Unknown Gift'
       
-      if (contrib.giftId === FREE_CONTRIBUTION_ID) {
+      if (contrib.giftId === POOL_ID) {
         giftTitle = 'Contribution libre 💝'
       } else {
         const gift = gifts.find(g => g.id === contrib.giftId)

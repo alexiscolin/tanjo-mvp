@@ -1,16 +1,13 @@
 import { NextRequest, NextResponse } from 'next/server'
-import { addContribution, getGifts, getContributions } from '@/lib/google-sheets'
+import { addContribution, getContributions } from '@/lib/google-sheets'
 import { sendContributionNotification, sendContributionConfirmation } from '@/lib/resend'
+import { POOL_ID } from '@/lib/constants'
 import { isValidEmail, sanitizeName, sanitizeString, isValidPrice } from '@/lib/utils'
 
-// GET /api/gifts/[id]/contributions - List all contributors for a gift
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// GET /api/pool/contributions - List all pool contributions
+export async function GET() {
   try {
-    const { id } = await params
-    const contributions = await getContributions(id)
+    const contributions = await getContributions(POOL_ID)
     
     // Return anonymized data (hide email for privacy)
     const anonymizedContributions = contributions.map(c => ({
@@ -23,7 +20,7 @@ export async function GET(
     
     return NextResponse.json({ contributions: anonymizedContributions })
   } catch (error) {
-    console.error('Error fetching contributions:', error)
+    console.error('Error fetching pool contributions:', error)
     return NextResponse.json(
       { error: 'Error fetching contributions' },
       { status: 500 }
@@ -31,13 +28,9 @@ export async function GET(
   }
 }
 
-// POST /api/gifts/[id]/contributions - Contribute to a gift (pot or full reservation)
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+// POST /api/pool/contributions - Contribute to the global pool
+export async function POST(request: NextRequest) {
   try {
-    const { id } = await params
     const { name, email, amount, message } = await request.json()
     
     // Validation
@@ -67,47 +60,25 @@ export async function POST(
     const sanitizedMessage = sanitizeString(message || '')
     const sanitizedEmail = email.trim().toLowerCase()
     
-    // Check that gift exists
-    const gifts = await getGifts()
-    const gift = gifts.find(g => g.id === id)
-    
-    if (!gift) {
-      return NextResponse.json(
-        { error: 'Gift not found' },
-        { status: 404 }
-      )
-    }
-    
-    // Check if it's already fully reserved
-    if (gift.isReserved && !gift.isPot) {
-      return NextResponse.json(
-        { error: 'This gift has already been reserved' },
-        { status: 400 }
-      )
-    }
-    
-    // Save contribution
+    // Save contribution to pool
     const contributionId = await addContribution({ 
-      giftId: id, 
+      giftId: POOL_ID, 
       name: sanitizedName, 
       email: sanitizedEmail, 
       amount, 
       message: sanitizedMessage 
     })
     
-    // Calculate new total
-    const newTotal = (gift.potCurrentAmount || 0) + amount
-    
     // Send emails (don't crash if it fails)
     try {
       const emailData = {
-        giftTitle: gift.title,
+        giftTitle: 'Contribution libre',
         contributorName: sanitizedName,
         contributorEmail: sanitizedEmail,
         amount,
         message: sanitizedMessage,
-        totalCollected: newTotal,
-        goal: gift.price,
+        totalCollected: amount, // No total tracking for pool
+        goal: 0, // Pool has no goal
       }
       
       await Promise.all([
@@ -121,12 +92,11 @@ export async function POST(
     return NextResponse.json({ 
       success: true,
       contributionId,
-      newTotal,
-      percentage: Math.round((newTotal / gift.price) * 100),
-      giftPrice: gift.price,
+      newTotal: amount,
+      percentage: 0,
     })
   } catch (error) {
-    console.error('Error contributing:', error)
+    console.error('Error contributing to pool:', error)
     return NextResponse.json(
       { error: 'Error contributing' },
       { status: 500 }

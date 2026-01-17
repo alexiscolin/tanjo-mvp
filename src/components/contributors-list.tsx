@@ -1,17 +1,11 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import * as React from 'react'
+import { useState } from 'react'
 import { Button } from '@/components/ui/button'
-import { 
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-} from '@/components/ui/dialog'
-import { Users, Loader2, Heart } from 'lucide-react'
+import { Users, Loader2, Heart, ArrowLeft } from 'lucide-react'
 import { type Currency, type ExchangeRates, formatCurrency } from '@/lib/currency'
-import { FREE_CONTRIBUTION_ID } from '@/lib/constants'
+import { POOL_ID } from '@/lib/constants'
 
 interface Contribution {
   id: string
@@ -29,6 +23,7 @@ interface ContributorsListProps {
   isCompleted?: boolean
   selectedCurrency: Currency
   exchangeRates: ExchangeRates
+  onBack?: () => void // Callback to return to card view
 }
 
 export function ContributorsList({ 
@@ -37,14 +32,14 @@ export function ContributorsList({
   giftPrice,
   isCompleted,
   selectedCurrency, 
-  exchangeRates 
+  exchangeRates,
+  onBack
 }: ContributorsListProps) {
-  const [open, setOpen] = useState(false)
   const [contributions, setContributions] = useState<Contribution[]>([])
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState('')
 
-  const isFreeContribution = giftId === FREE_CONTRIBUTION_ID
+  const isFreeContribution = giftId === POOL_ID
   const showAmounts = !isFreeContribution && !isCompleted
   
   // Calculate percentage for each contribution
@@ -74,10 +69,10 @@ export function ContributorsList({
     }
   }
 
-  const handleOpen = () => {
-    setOpen(true)
+  // Fetch on mount
+  React.useEffect(() => {
     fetchContributions()
-  }
+  }, [giftId])
 
   const formatDate = (isoDate: string) => {
     try {
@@ -92,84 +87,71 @@ export function ContributorsList({
     }
   }
 
+  // Contributors list view (replaces card content)
   return (
-    <>
-      <Button 
-        variant="ghost" 
-        size="sm" 
-        onClick={handleOpen}
-        className="w-full text-xs text-muted-foreground hover:text-foreground"
-      >
-        <Users className="mr-1.5 h-3.5 w-3.5" />
-        Voir les contributeurs
-      </Button>
+    <div className="space-y-3">
+      <div className="flex items-center justify-between">
+        {onBack && (
+          <Button
+            variant="ghost"
+            size="sm"
+            onClick={onBack}
+            className="text-xs"
+          >
+            <ArrowLeft className="mr-1.5 h-3.5 w-3.5" />
+            Retour
+          </Button>
+        )}
+        <div className="flex items-center gap-2 text-rose-500 ml-auto">
+          <Heart className="h-4 w-4" />
+          <span className="text-sm font-medium">Contributeurs</span>
+        </div>
+      </div>
 
-      <Dialog open={open} onOpenChange={setOpen}>
-        <DialogContent onClose={() => setOpen(false)} className="sm:max-w-md">
-          <DialogHeader>
-            <DialogTitle className="flex items-center gap-2">
-              <Heart className="h-5 w-5 text-rose-500" />
-              Contributeurs
-            </DialogTitle>
-            <DialogDescription>
-              {giftTitle}
-            </DialogDescription>
-          </DialogHeader>
-
-          <div className="max-h-[60vh] overflow-y-auto -mx-6 px-6">
-            {isLoading ? (
-              <div className="flex justify-center py-8">
-                <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
-              </div>
-            ) : error ? (
-              <div className="text-center py-8 text-sm text-destructive">
-                {error}
-              </div>
-            ) : contributions.length === 0 ? (
-              <div className="text-center py-8 text-sm text-muted-foreground">
-                Aucune contribution pour le moment
-              </div>
-            ) : (
-              <div className="space-y-3">
-                {contributions.map((contribution) => (
-                  <div 
-                    key={contribution.id}
-                    className="flex items-start gap-3 p-3 rounded-lg bg-muted/50 border"
-                  >
-                    <div className="w-10 h-10 rounded-full bg-gradient-to-br from-rose-400 to-pink-400 flex items-center justify-center text-white font-medium text-sm flex-shrink-0">
-                      {contribution.name.charAt(0).toUpperCase()}
-                    </div>
-                    <div className="flex-1 min-w-0">
-                      <div className="flex items-start justify-between gap-2">
-                        <p className="font-medium text-sm">{contribution.name}</p>
-                        {showAmounts && (
-                          <span className="font-semibold text-amber-600 text-sm whitespace-nowrap">
-                            {getContributionPercentage(contribution.amount)}%
-                          </span>
-                        )}
-                      </div>
-                      {contribution.message && (
-                        <p className="text-xs text-muted-foreground mt-1 italic">
-                          &quot;{contribution.message}&quot;
-                        </p>
-                      )}
-                      <p className="text-xs text-muted-foreground mt-1">
-                        {formatDate(contribution.createdAt)}
-                      </p>
-                    </div>
+        <div className="max-h-[300px] overflow-y-auto space-y-2">
+          {isLoading ? (
+            <div className="flex justify-center py-8">
+              <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+            </div>
+          ) : error ? (
+            <div className="text-center py-8 text-sm text-destructive">
+              {error}
+            </div>
+          ) : contributions.length === 0 ? (
+            <div className="text-center py-8 text-sm text-muted-foreground">
+              Aucune contribution pour le moment
+            </div>
+          ) : (
+            contributions.map((contribution) => (
+              <div 
+                key={contribution.id}
+                className="flex items-start gap-2 p-2 rounded-lg bg-muted/50 border"
+              >
+                <div className="w-8 h-8 rounded-full bg-linear-to-br from-rose-400 to-pink-400 flex items-center justify-center text-white font-medium text-xs shrink-0">
+                  {contribution.name.charAt(0).toUpperCase()}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <div className="flex items-start justify-between gap-2">
+                    <p className="font-medium text-xs">{contribution.name}</p>
+                    {showAmounts && (
+                      <span className="font-semibold text-amber-600 text-xs whitespace-nowrap">
+                        {getContributionPercentage(contribution.amount)}%
+                      </span>
+                    )}
                   </div>
-                ))}
+                  {contribution.message && (
+                    <p className="text-xs text-muted-foreground mt-0.5 italic line-clamp-2">
+                      &quot;{contribution.message}&quot;
+                    </p>
+                  )}
+                  <p className="text-xs text-muted-foreground mt-0.5">
+                    {formatDate(contribution.createdAt)}
+                  </p>
+                </div>
               </div>
-            )}
-          </div>
-
-          <div className="flex justify-end pt-4 border-t">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Fermer
-            </Button>
-          </div>
-        </DialogContent>
-      </Dialog>
-    </>
-  )
+            ))
+          )}
+        </div>
+      </div>
+    )
 }

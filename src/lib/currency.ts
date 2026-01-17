@@ -13,6 +13,25 @@ const DEBUG = process.env.NODE_ENV === 'development'
 export type Currency = 'EUR' | 'JPY' | 'USD'
 
 /**
+ * Currency constants - Use these instead of magic strings!
+ */
+export const CURRENCY = {
+  EUR: 'EUR' as const,
+  JPY: 'JPY' as const,
+  USD: 'USD' as const,
+} as const
+
+/**
+ * Default/Base currency for the application
+ */
+export const BASE_CURRENCY = CURRENCY.JPY
+
+/**
+ * Default fallback currency
+ */
+export const DEFAULT_CURRENCY = CURRENCY.EUR
+
+/**
  * List of supported currencies
  */
 export const CURRENCIES: Currency[] = ['EUR', 'JPY', 'USD'] as const
@@ -40,7 +59,7 @@ let cacheTimestamp: number | null = null
  * No geolocation permission needed!
  */
 export function detectPreferredCurrency(): Currency {
-  if (typeof window === 'undefined') return 'EUR'
+  if (typeof window === 'undefined') return DEFAULT_CURRENCY
   
   // 1. Check if there's a saved preference
   const savedCurrency = localStorage.getItem('preferredCurrency') as Currency | null
@@ -55,7 +74,7 @@ export function detectPreferredCurrency(): Currency {
     if (DEBUG) console.log('🌏 Detected timezone:', timeZone)
     
     // Japan
-    if (timeZone.startsWith('Asia/Tokyo')) return 'JPY'
+    if (timeZone.startsWith('Asia/Tokyo')) return CURRENCY.JPY
     
     // USA
     if (timeZone.startsWith('America/')) {
@@ -65,12 +84,12 @@ export function detectPreferredCurrency(): Currency {
           timeZone.includes('Denver') || 
           timeZone.includes('Los_Angeles') ||
           timeZone.includes('Phoenix')) {
-        return 'USD'
+        return CURRENCY.USD
       }
     }
     
     // Europe
-    if (timeZone.startsWith('Europe/')) return 'EUR'
+    if (timeZone.startsWith('Europe/')) return CURRENCY.EUR
   } catch (error) {
     if (DEBUG) console.warn('⚠️ Unable to detect timezone')
   }
@@ -79,17 +98,17 @@ export function detectPreferredCurrency(): Currency {
   const locale = navigator.language || 'en-US'
   if (DEBUG) console.log('🌐 Detected locale:', locale)
   
-  if (locale.startsWith('ja')) return 'JPY'
-  if (locale.startsWith('en-US')) return 'USD'
-  if (locale.startsWith('en-GB')) return 'EUR'
+  if (locale.startsWith('ja')) return CURRENCY.JPY
+  if (locale.startsWith('en-US')) return CURRENCY.USD
+  if (locale.startsWith('en-GB')) return CURRENCY.EUR
   if (locale.includes('FR') || locale.includes('BE') || locale.includes('IT') || 
       locale.includes('ES') || locale.includes('DE') || locale.includes('PT') ||
       locale.includes('NL') || locale.includes('AT')) {
-    return 'EUR'
+    return CURRENCY.EUR
   }
   
-  // Default EUR
-  return 'EUR'
+  // Default
+  return DEFAULT_CURRENCY
 }
 
 /**
@@ -160,11 +179,11 @@ export async function getExchangeRates(): Promise<ExchangeRates> {
  */
 export function convertFromJpy(jpy: number, targetCurrency: Currency, rates: ExchangeRates): number {
   switch (targetCurrency) {
-    case 'JPY':
+    case CURRENCY.JPY:
       return jpy // Already in yen
-    case 'EUR':
+    case CURRENCY.EUR:
       return Math.round(jpy * rates.EUR * 100) // Convert to EUR cents
-    case 'USD':
+    case CURRENCY.USD:
       return Math.round(jpy * rates.USD * 100) // Convert to USD cents
     default:
       return jpy
@@ -180,12 +199,12 @@ export function convertFromJpy(jpy: number, targetCurrency: Currency, rates: Exc
  */
 export function convertToJpy(amount: number, fromCurrency: Currency, rates: ExchangeRates): number {
   switch (fromCurrency) {
-    case 'JPY':
+    case CURRENCY.JPY:
       return amount
-    case 'EUR':
+    case CURRENCY.EUR:
       // amount is in EUR cents
       return Math.round((amount / 100) / rates.EUR)
-    case 'USD':
+    case CURRENCY.USD:
       // amount is in USD cents
       return Math.round((amount / 100) / rates.USD)
     default:
@@ -214,7 +233,7 @@ export function formatCurrency(jpy: number, currency: Currency, rates: ExchangeR
   
   // For JPY, amount is in yen (no cents)
   // For EUR/USD, amount is in cents
-  const displayAmount = currency === 'JPY' 
+  const displayAmount = currency === CURRENCY.JPY 
     ? amount 
     : amount / 100
   

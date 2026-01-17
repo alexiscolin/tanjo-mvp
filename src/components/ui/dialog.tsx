@@ -41,23 +41,32 @@ function DialogContent({
   className,
   children,
   onClose,
+  ...props
 }: {
   className?: string
   children: React.ReactNode
   onClose: () => void
-}) {
+} & React.HTMLAttributes<HTMLDivElement>) {
+  const handleOverlayClick = (e: React.MouseEvent) => {
+    // Only close if clicking directly on the overlay
+    if (e.target === e.currentTarget) {
+      onClose()
+    }
+  }
+
   return (
-    <div className="fixed inset-0 z-50">
+    <div className="fixed inset-0 z-50" onClick={handleOverlayClick}>
       {/* Overlay */}
       <div 
         className="fixed inset-0 bg-black/50 animate-in fade-in-0"
-        onClick={onClose}
+        aria-hidden="true"
       />
       {/* Content */}
-      <div className="fixed inset-0 flex items-center justify-center p-4">
+      <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
         <div
+          {...props}
           className={cn(
-            "relative bg-background w-full max-w-lg rounded-lg border p-6 shadow-lg animate-in fade-in-0 zoom-in-95",
+            "relative bg-background w-full max-w-lg rounded-lg border p-6 shadow-lg animate-in fade-in-0 zoom-in-95 pointer-events-auto",
             className
           )}
           onClick={(e) => e.stopPropagation()}
