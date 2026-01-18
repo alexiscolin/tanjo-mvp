@@ -51,29 +51,68 @@ async function getSheets() {
 export async function getGifts(): Promise<Gift[]> {
   const sheets = await getSheets()
   
-  const response = await sheets.spreadsheets.values.get({
-    spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.GIFTS}!A2:N`,
-  })
+  // Fetch both gifts and contributions in parallel
+  const [giftsResponse, contributionsResponse] = await Promise.all([
+    sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEETS.GIFTS}!A2:N`,
+    }),
+    sheets.spreadsheets.values.get({
+      spreadsheetId: SPREADSHEET_ID,
+      range: `${SHEETS.CONTRIBUTIONS}!A2:H`,
+    }),
+  ])
 
-  const rows = response.data.values || []
+  const giftsRows = giftsResponse.data.values || []
+  const contributionsRows = contributionsResponse.data.values || []
   
-  return rows.map((row, index) => ({
-    id: row[0] || String(index + 1),
-    title: row[1] || '',
-    description: row[2] || '',
-    price: parseInt(row[3]) || 0,
-    imageUrl: row[4] || '',
-    category: row[5] || 'autre',
-    externalUrl: row[6] || undefined,
-    isPot: row[7]?.toLowerCase() === 'oui',
-    potCurrentAmount: parseInt(row[8]) || 0,
-    isReserved: row[9]?.toLowerCase() === 'oui',
-    reservedBy: row[10] || undefined,
-    reservedEmail: row[11] || undefined,
-    reservedAt: row[12] || undefined,
-    isOccasion: row[13]?.toLowerCase() === 'oui',
-  }))
+  // Parse contributions and group by giftId
+  const contributionsByGiftId: Record<string, Contribution[]> = {}
+  
+  contributionsRows
+    .filter(row => row[0] && row[1]) // Filter empty rows
+    .forEach(row => {
+      const contribution: Contribution = {
+        id: row[0],
+        giftId: row[1],
+        name: row[2] || 'Anonyme',
+        email: row[3] || '',
+        amount: parseInt(row[4]) || 0,
+        message: row[5] || undefined,
+        createdAt: row[6] || new Date().toISOString(),
+        cancelToken: row[7] || undefined,
+      }
+      
+      if (!contributionsByGiftId[contribution.giftId]) {
+        contributionsByGiftId[contribution.giftId] = []
+      }
+      contributionsByGiftId[contribution.giftId].push(contribution)
+    })
+  
+  // Parse gifts and attach contributors
+  return giftsRows.map((row, index) => {
+    const giftId = row[0] || String(index + 1)
+    const isPot = row[7]?.toLowerCase() === 'oui'
+    const contributors = isPot ? (contributionsByGiftId[giftId] || []) : undefined
+    
+    return {
+      id: giftId,
+      title: row[1] || '',
+      description: row[2] || '',
+      price: parseInt(row[3]) || 0,
+      imageUrl: row[4] || '',
+      category: row[5] || 'autre',
+      externalUrl: row[6] || undefined,
+      isPot,
+      potCurrentAmount: parseInt(row[8]) || 0,
+      contributors, // Contributors for pot gifts (count = contributors.length)
+      isReserved: row[9]?.toLowerCase() === 'oui',
+      reservedBy: row[10] || undefined,
+      reservedEmail: row[11] || undefined,
+      reservedAt: row[12] || undefined,
+      isOccasion: row[13]?.toLowerCase() === 'oui',
+    }
+  })
 }
 
 export async function addGift(gift: Omit<Gift, 'id' | 'isReserved' | 'potCurrentAmount'>): Promise<void> {

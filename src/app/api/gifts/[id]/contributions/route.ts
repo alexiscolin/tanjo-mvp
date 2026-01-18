@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { addContribution, getGifts, getContributions, getPaymentConfig } from '@/lib/google-sheets'
 import { sendContributionConfirmationEmail, sendContributionNotificationToAdmin } from '@/lib/resend'
-import { isValidEmail, sanitizeName, sanitizeString, isValidPrice } from '@/lib/utils'
+import { validateContribution, isValidationError } from '@/lib/utils'
 import { getExchangeRates, CURRENCY } from '@/lib/currency'
 
 // GET /api/gifts/[id]/contributions - List all contributors for a gift
@@ -39,40 +39,25 @@ export async function POST(
 ) {
   try {
     const { id } = await params
-    const { 
-      name, 
-      email, 
-      amount: amountInJpy, 
-      message, 
-      currency
-    } = await request.json()
+    const body = await request.json()
     
-    // Validation
-    if (!name || !email || amountInJpy === undefined || amountInJpy === null) {
+    // Validate and sanitize input
+    const validation = validateContribution({
+      name: body.name,
+      email: body.email,
+      amount: body.amount,
+      message: body.message,
+      currency: body.currency,
+    })
+    
+    if (isValidationError(validation)) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
+        { error: validation.error },
+        { status: validation.status }
       )
     }
     
-    if (!isValidEmail(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      )
-    }
-    
-    if (!isValidPrice(amountInJpy) || amountInJpy < 100) {
-      return NextResponse.json(
-        { error: 'Invalid or too small amount (minimum 100 JPY)' },
-        { status: 400 }
-      )
-    }
-    
-    // Sanitize inputs
-    const sanitizedName = sanitizeName(name)
-    const sanitizedMessage = sanitizeString(message || '')
-    const sanitizedEmail = email.trim().toLowerCase()
+    const { name: sanitizedName, email: sanitizedEmail, amount: amountInJpy, message: sanitizedMessage, currency } = validation
     
     // Check that gift exists
     const gifts = await getGifts()
@@ -120,7 +105,7 @@ export async function POST(
         contributorName: sanitizedName,
         contributorEmail: sanitizedEmail,
         amountInJpy,              // JPY for database storage
-        currency: currency || CURRENCY.JPY,
+        currency,
         message: sanitizedMessage || undefined,
         totalCollected: newTotal,
         goal: gift.price,

@@ -6,8 +6,20 @@
 @theme inline {
   --color-background: var(--background);
   --color-foreground: var(--foreground);
-  --font-sans: var(--font-geist-sans);
-  --font-mono: var(--font-geist-mono);
+  --color-surface: var(--surface);
+  --color-dark: var(--dark);
+  --color-accent-red: var(--accent-red);
+  --color-accent-gold: var(--accent-gold);
+  --color-neutral-light-1: var(--neutral-light-1);
+  --color-neutral-light-2: var(--neutral-light-2);
+  --color-neutral-light-3: var(--neutral-light-3);
+  --color-neutral-light-4: var(--neutral-light-4);
+  --color-neutral-light-5: var(--neutral-light-5);
+  --color-neutral-light-6: var(--neutral-light-6);
+  --font-sans: var(--font-sans);
+  --font-serif: var(--font-serif);
+  --font-mono: var(--font-mono);
+  --font-japanese: var(--font-japanese);
   --color-sidebar-ring: var(--sidebar-ring);
   --color-sidebar-border: var(--sidebar-border);
   --color-sidebar-accent-foreground: var(--sidebar-accent-foreground);
@@ -50,6 +62,16 @@
   --radius: 0.625rem;
   --background: oklch(1 0 0);
   --foreground: oklch(0.145 0 0);
+  --surface: oklch(0.992 0.003 85); /* #faf8f5 */
+  --dark: oklch(0.145 0 0); /* #1a1a1a */
+  --accent-red: oklch(0.453 0.187 22.5); /* #c41e3a */
+  --accent-gold: oklch(0.55 0.12 65); /* Amber/Gold for occasions */
+  --neutral-light-1: oklch(0.92 0.01 85); /* #e8e3dd */
+  --neutral-light-2: oklch(0.85 0.015 80); /* #d4c9be */
+  --neutral-light-3: oklch(0.945 0.008 85); /* #f0ebe5 */
+  --neutral-light-4: oklch(0.88 0.012 80); /* #e0d5c9 */
+  --neutral-light-5: oklch(0.93 0.009 85); /* #ede8e2 */
+  --neutral-light-6: oklch(0.87 0.013 80); /* #ddd2c6 */
   --card: oklch(1 0 0);
   --card-foreground: oklch(0.145 0 0);
   --popover: oklch(1 0 0);

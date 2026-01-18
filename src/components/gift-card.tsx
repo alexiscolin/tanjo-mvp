@@ -4,11 +4,11 @@ import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { Gift as GiftType, categoryLabels } from '@/types'
+import { Gift as GiftType, categoryLabels, categoryIcons } from '@/types'
 import { Check, Gift, HandHeart, ExternalLink, Users } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { type Currency, type ExchangeRates, formatCurrency } from '@/lib/currency'
-import { ContributorsList } from './contributors-list'
+import { ContributorsProgress } from './contributors-progress'
 
 interface GiftCardProps {
   gift: GiftType
@@ -19,185 +19,135 @@ interface GiftCardProps {
 }
 
 export function GiftCard({ gift, onReserve, onContribute, selectedCurrency, exchangeRates }: GiftCardProps) {
-  const [showContributors, setShowContributors] = useState(false)
   const formatPrice = (cents: number) => formatCurrency(cents, selectedCurrency, exchangeRates, true)
 
   const progressPercentage = gift.isPot && gift.potCurrentAmount 
     ? Math.min((gift.potCurrentAmount / gift.price) * 100, 100)
     : 0
 
+  // Get the icon component for the category
+  const CategoryIcon = categoryIcons[gift.category] || Gift
+  
+  const contributors = gift.contributors || []
+
   return (
-    <Card className={cn(
-      "group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1",
-      gift.isReserved && "opacity-75"
-    )}>
+    <Card 
+      className={cn(
+        "group overflow-hidden transition-all duration-300",
+        !gift.isReserved && "hover:-translate-y-1 cursor-pointer",
+        gift.isReserved && "cursor-default"
+      )}
+      onClick={() => !gift.isReserved && (gift.isPot ? onContribute?.(gift) : onReserve?.(gift))}
+    >
       {/* Image */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-muted">
+      <div className="relative overflow-hidden bg-muted rounded-xl mb-3">
         {gift.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={gift.imageUrl}
             alt={gift.title}
-            className="absolute inset-0 w-full h-full object-cover transition-transform duration-500 group-hover:scale-105"
+            className={cn(
+              "w-full h-auto object-cover transition-transform duration-500",
+              !gift.isReserved && "group-hover:scale-105"
+            )}
           />
         ) : (
-          <div className="absolute inset-0 flex items-center justify-center bg-gradient-to-br from-rose-100 to-pink-100">
-            <Gift className="h-12 w-12 text-rose-300" />
+          <div className="aspect-square flex items-center justify-center bg-[#f5f5f5]">
+            <Gift className="h-12 w-12 text-dark/10" />
           </div>
         )}
         
         {/* Badges */}
         <div className="absolute top-3 left-3 flex flex-wrap gap-2">
-          <Badge variant="secondary" className="bg-white/90 backdrop-blur-sm text-xs">
-            {categoryLabels[gift.category] || '🎁 Autre'}
+          <Badge variant="secondary" className="bg-surface/90 backdrop-blur-sm text-xs flex items-center gap-1">
+            <CategoryIcon className="h-3 w-3" />
+            {categoryLabels[gift.category] || 'Autre'}
           </Badge>
         </div>
 
-        {/* Reserved overlay */}
-        {gift.isReserved && (
-          <div className="absolute inset-0 bg-black/40 backdrop-blur-[2px] flex flex-col items-center justify-center gap-2">
-            <Badge className="bg-green-500 text-white border-0 text-sm px-4 py-2">
-              <Check className="mr-2 h-4 w-4" />
-              {gift.isPot ? 'Objectif atteint !' : 'Réservé'}
+
+        {/* Occasion badge */}
+        {gift.isOccasion && !gift.isReserved && (
+          <div className="absolute top-2 right-2">
+            <Badge className="bg-accent-gold text-white text-xs border-0 px-2 py-1">
+              Occasion
             </Badge>
-            {gift.reservedBy && (
-              <p className="text-white text-sm font-medium bg-black/50 px-3 py-1 rounded-full">
-                par {gift.reservedBy}
-              </p>
-            )}
           </div>
         )}
 
-        {/* External link */}
-        {gift.externalUrl && (
-          <a
-            href={gift.externalUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="absolute top-3 right-3 p-2 rounded-full bg-white/90 backdrop-blur-sm opacity-0 group-hover:opacity-100 transition-opacity hover:bg-white"
-            onClick={(e) => e.stopPropagation()}
-          >
-            <ExternalLink className="h-4 w-4 text-muted-foreground" />
-          </a>
+        {/* Action buttons on image */}
+        {!gift.isReserved && (
+          <>
+            {/* Reserve/Contribute button - bottom left */}
+            <div className="absolute bottom-3 left-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+              <button
+
+                className="flex items-center gap-2 px-4 py-3 rounded-full bg-dark text-white hover:bg-dark/90 transition-colors shadow-lg cursor-pointer"
+                aria-label={gift.isPot ? 'Participer' : 'Réserver'}
+              >
+                {gift.isPot ? (
+                  <>
+                    <HandHeart className="h-5 w-5" />
+                    <span className="text-sm font-medium">Cagnotter</span>
+                  </>
+                ) : (
+                  <>
+                    <Gift className="h-5 w-5" />
+                    <span className="text-sm font-medium">Offrir</span>
+                  </>
+                )}
+              </button>
+            </div>
+
+            {/* External link - bottom right */}
+            {gift.externalUrl && (
+              <div className="absolute bottom-3 right-3 opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                <a
+                  href={gift.externalUrl}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  onClick={(e) => e.stopPropagation()}
+                  className="flex items-center justify-center w-12 h-12 rounded-full bg-surface text-dark hover:bg-surface/90 transition-colors shadow-lg"
+                  aria-label="Voir le produit"
+                >
+                  <ExternalLink className="h-5 w-5" />
+                </a>
+              </div>
+            )}
+          </>
         )}
       </div>
 
-      <CardContent className="p-4">
-        {/* Title & Description */}
-        <h3 className="font-medium text-lg leading-tight mb-2 line-clamp-2">
+      <CardContent className="p-0">
+        {/* Title */}
+        <h3 className="font-medium text-lg leading-tight mb-1 line-clamp-2 text-dark">
           {gift.title}
         </h3>
-        <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-          {gift.description}
+        
+        {/* Description & Price */}
+        <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
+          {gift.description} - <span className="text-dark/60 font-bold">{formatPrice(gift.price)}</span>
         </p>
 
-        {/* Price */}
-        <div className="mb-4">
-          <div className="flex items-center gap-2 mb-2">
-            <p className="text-xl font-semibold text-foreground">
-              {formatPrice(gift.price)}
-            </p>
-            {gift.isOccasion && (
-              <Badge variant="secondary" className="bg-emerald-500 text-white text-xs border-0">
-                ♻️ Occasion
-              </Badge>
-            )}
-          </div>
-          
-          {gift.isPot && (gift.potCurrentAmount || 0) > 0 && (
-            <div className="space-y-1">
-              <p className="text-xs text-muted-foreground">
-                {formatPrice(gift.potCurrentAmount || 0)} collectés (<span className="text-rose-500 font-medium">{Math.round(progressPercentage)}%</span>)
-              </p>
-              <div className="relative h-1 bg-muted rounded-full overflow-hidden">
-                <div 
-                  className="h-full bg-rose-400 rounded-full transition-all duration-500"
-                  style={{ width: `${Math.min(progressPercentage, 100)}%` }}
-                />
-              </div>
-            </div>
-          )}
-        </div>
-
-        {/* Action button */}
-        {!gift.isReserved && (
-          <>
-            {gift.isPot ? (
-              <Button 
-                className="w-full bg-rose-500 hover:bg-rose-600"
-                onClick={() => onContribute?.(gift)}
-              >
-                <HandHeart className="mr-1 h-4 w-4" />
-                Participer
-              </Button>
-            ) : (
-              <Button 
-                className="w-full bg-rose-500 hover:bg-rose-600"
-                onClick={() => onReserve?.(gift)}
-              >
-                <Gift className="mr-1 h-4 w-4" />
-                Je l'offre
-              </Button>
-            )}
-            {gift.isPot && (gift.potCurrentAmount || 0) > 0 && (
-              <>
-                <Button 
-                  variant="ghost" 
-                  size="sm" 
-                  onClick={() => setShowContributors(!showContributors)}
-                  className="w-full text-xs text-muted-foreground hover:text-foreground mt-2"
-                >
-                  <Users className="mr-1.5 h-3.5 w-3.5" />
-                  {showContributors ? 'Masquer' : 'Voir'} les contributeurs
-                </Button>
-                
-                {showContributors && (
-                  <div className="mt-3">
-                    <ContributorsList 
-                      giftId={gift.id}
-                      giftTitle={gift.title}
-                      giftPrice={gift.price}
-                      giftCurrentAmount={gift.potCurrentAmount}
-                      isCompleted={gift.isReserved}
-                      selectedCurrency={selectedCurrency}
-                      exchangeRates={exchangeRates}
-                      onBack={() => setShowContributors(false)}
-                    />
-                  </div>
-                )}
-              </>
-            )}
-          </>
+        {/* Reserved badge - shown at bottom for reserved gifts */}
+        {gift.isReserved && (
+          <Badge className="text-white bg-accent-red text-xs mb-3">
+            <Check className="h-3 w-3 mr-1" />
+            {gift.isPot ? 'Réservé' : `Réservé par ${gift.reservedBy}`}
+          </Badge>
         )}
-        
-        {/* Contributors list for completed pots */}
-        {gift.isReserved && gift.isPot && (gift.potCurrentAmount || 0) > 0 && (
-          <>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setShowContributors(!showContributors)}
-              className="w-full text-xs text-muted-foreground hover:text-foreground"
-            >
-              <Users className="mr-1.5 h-3.5 w-3.5" />
-              {showContributors ? 'Masquer' : 'Voir'} les contributeurs
-            </Button>
-            
-            {showContributors && (
-              <div className="mt-3">
-                <ContributorsList 
-                  giftId={gift.id}
-                  giftTitle={gift.title}
-                  giftPrice={gift.price}
-                  giftCurrentAmount={gift.potCurrentAmount}
-                  isCompleted={true}
-                  selectedCurrency={selectedCurrency}
-                  exchangeRates={exchangeRates}
-                  onBack={() => setShowContributors(false)}
-                />
-              </div>
-            )}
-          </>
+
+        {/* Progress for pots - Always show for pot gifts */}
+        {gift.isPot && (
+          <ContributorsProgress
+            currentAmount={gift.potCurrentAmount || 0}
+            goalAmount={gift.price}
+            contributors={contributors}
+            selectedCurrency={selectedCurrency}
+            exchangeRates={exchangeRates}
+            variant="default"
+            progressPercentage={progressPercentage}
+          />
         )}
       </CardContent>
     </Card>

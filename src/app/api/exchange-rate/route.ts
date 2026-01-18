@@ -6,6 +6,10 @@ import { getExchangeRates, type ExchangeRates } from '@/lib/currency'
  * GET /api/exchange-rate
  * 
  * Returns JPY to EUR and USD rates
+ * 
+ * NOTE: This endpoint is no longer used by the frontend.
+ * Exchange rates are now included in the /api/registry response.
+ * Kept for potential external use or debugging.
  */
 export async function GET() {
   try {

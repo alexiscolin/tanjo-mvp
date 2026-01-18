@@ -14,26 +14,23 @@ export function CurrencySelector({ selectedCurrency, onCurrencyChange }: Currenc
   }
 
   return (
-    <div className="flex items-center gap-2 bg-white/80 backdrop-blur-sm rounded-full px-4 py-2 shadow-sm border">
-      <span className="text-sm text-gray-600">Devise:</span>
-      <div className="flex gap-1">
-        {CURRENCIES.map((currency) => (
-          <button
-            key={currency}
-            onClick={() => handleCurrencyChange(currency)}
-            className={`
-              px-3 py-1 rounded-full text-sm font-medium transition-all
-              ${selectedCurrency === currency
-                ? 'bg-blue-500 text-white shadow-sm'
-                : 'bg-gray-100 text-gray-700 hover:bg-gray-200'
-              }
-            `}
-            title={currencyLabels[currency]}
-          >
-            {currencySymbols[currency]} {currency}
-          </button>
-        ))}
-      </div>
+    <div className="flex items-center gap-1.5 bg-surface/40 backdrop-blur-sm rounded-full px-3 py-1.5 border border-dark/10 hover:scale-105 transition-all duration-300">
+      {CURRENCIES.map((currency) => (
+        <button
+          key={currency}
+          onClick={() => handleCurrencyChange(currency)}
+          className={`
+            px-2 py-0.5 rounded-full text-xs font-medium transition-all cursor-pointer
+            ${selectedCurrency === currency
+              ? 'bg-dark text-white'
+              : 'text-dark/60 hover:text-dark hover:bg-surface/60'
+            }
+          `}
+          title={currencyLabels[currency]}
+        >
+          {currencySymbols[currency]}
+        </button>
+      ))}
     </div>
   )
 }

@@ -66,7 +66,7 @@ function DialogContent({
         <div
           {...props}
           className={cn(
-            "relative bg-background w-full max-w-lg rounded-lg border p-6 shadow-lg animate-in fade-in-0 zoom-in-95 pointer-events-auto",
+            "relative bg-background w-full max-w-lg rounded-xl border p-6 shadow-lg animate-in fade-in-0 zoom-in-95 pointer-events-auto",
             className
           )}
           onClick={(e) => e.stopPropagation()}

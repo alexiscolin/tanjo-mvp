@@ -201,7 +201,7 @@ export function ImagePicker({ value, onChange }: ImagePickerProps) {
                 href={pageUrl} 
                 target="_blank" 
                 rel="noopener noreferrer"
-                className="inline-flex items-center gap-1 text-rose-500 hover:underline"
+                className="inline-flex items-center gap-1 text-accent-red hover:underline"
               >
                 <ExternalLink className="h-3 w-3" />
                 Voir la page
@@ -215,7 +215,7 @@ export function ImagePicker({ value, onChange }: ImagePickerProps) {
                 <button
                   key={index}
                   type="button"
-                  className="group relative aspect-square rounded-lg overflow-hidden bg-muted border-2 border-transparent hover:border-rose-500 transition-colors focus:outline-none focus:border-rose-500"
+                  className="group relative aspect-square rounded-lg overflow-hidden bg-muted border-2 border-transparent hover:border-accent-red transition-colors focus:outline-none focus:border-accent-red"
                   onClick={() => handleSelectImage(imageUrl)}
                 >
                   {/* eslint-disable-next-line @next/next/no-img-element */}
@@ -230,7 +230,7 @@ export function ImagePicker({ value, onChange }: ImagePickerProps) {
                     }}
                   />
                   <div className="absolute inset-0 bg-black/0 group-hover:bg-black/20 transition-colors flex items-center justify-center">
-                    <div className="w-8 h-8 rounded-full bg-rose-500 text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
+                    <div className="w-8 h-8 rounded-full bg-accent-red text-white flex items-center justify-center opacity-0 group-hover:opacity-100 transition-opacity">
                       <Check className="h-5 w-5" />
                     </div>
                   </div>

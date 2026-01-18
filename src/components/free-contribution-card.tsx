@@ -1,16 +1,15 @@
 'use client'
 
-import { useState } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { HandHeart, Sparkles, Users } from 'lucide-react'
-import { type Currency, type ExchangeRates, formatCurrency } from '@/lib/currency'
-import { ContributorsList } from './contributors-list'
-import { POOL_ID } from '@/lib/constants'
+import { Card } from '@/components/ui/card'
+import { HandHeart } from 'lucide-react'
+import { type Currency, type ExchangeRates } from '@/lib/currency'
+import { type Contribution } from '@/types'
+import { ContributorsProgress } from './contributors-progress'
 
 interface FreeContributionCardProps {
   title: string
   totalAmount: number
+  contributors: Contribution[]
   onContribute: () => void
   selectedCurrency: Currency
   exchangeRates: ExchangeRates
@@ -18,83 +17,44 @@ interface FreeContributionCardProps {
 
 export function FreeContributionCard({ 
   title, 
-  totalAmount, 
+  totalAmount,
+  contributors,
   onContribute,
   selectedCurrency,
   exchangeRates
 }: FreeContributionCardProps) {
-  const [showContributors, setShowContributors] = useState(false)
-  const formatPrice = (cents: number) => formatCurrency(cents, selectedCurrency, exchangeRates, true)
-
   return (
-    <Card className="group overflow-hidden transition-all duration-300 hover:shadow-xl hover:-translate-y-1 border-2 border-amber-200 bg-gradient-to-br from-amber-50 to-rose-50">
-      {/* Header with icon */}
-      <div className="relative aspect-[4/3] overflow-hidden bg-gradient-to-br from-amber-400 via-rose-400 to-pink-500">
-        <div className="absolute inset-0 flex items-center justify-center">
-          <div className="text-center">
-            <div className="inline-flex items-center justify-center w-24 h-24 rounded-full bg-white/30 backdrop-blur-sm mb-4">
-              <Sparkles className="h-12 w-12 text-white" strokeWidth={1.5} />
+    <Card 
+      className="group overflow-hidden transition-all duration-300 hover:-translate-y-1 cursor-pointer"
+      onClick={onContribute}
+    >
+      <div className="relative overflow-hidden bg-accent-red rounded-xl mb-3">
+        <div className="flex items-center justify-center">
+          <div className="text-center p-4">
+            <div className="inline-flex items-center justify-center w-24 h-24 mt-12 rounded-full bg-surface mb-4">
+              <HandHeart className="h-12 w-12 text-accent-red" strokeWidth={1.5} />
             </div>
-            <h3 className="text-2xl font-bold text-white drop-shadow-lg">
+            <h3 className="font-bold text-xl leading-tight line-clamp-2 text-white mb-2">
               {title}
             </h3>
+            <p className="text-sm text-white/80 line-clamp-2 mb-4">
+              Contribuez librement au montant de votre choix pour soutenir notre projet
+            </p>
+
+            {/* Contributors progress - Always show */}
+            <div className="mb-6 mx-4">
+              <ContributorsProgress
+                currentAmount={totalAmount}
+                contributors={contributors}
+                selectedCurrency={selectedCurrency}
+                exchangeRates={exchangeRates}
+                variant="inverted"
+                progressPercentage={100}
+              />
+            </div>
           </div>
         </div>
       </div>
-
-      <CardContent className="p-4">
-        {/* Description */}
-        <p className="text-sm text-muted-foreground mb-4 text-center">
-          Vous souhaitez contribuer sans choisir de cadeau précis ? Participez librement au montant de votre choix. 🎁
-        </p>
-
-        {/* Total collected */}
-        {totalAmount > 0 && (
-          <div className="text-center mb-4 p-3 rounded-lg bg-amber-50 border border-amber-200">
-            <p className="text-xs text-muted-foreground mb-1">Total collecté</p>
-            <p className="text-2xl font-bold text-amber-600">
-              {formatPrice(totalAmount)}
-            </p>
-          </div>
-        )}
-
-        {/* Action button */}
-        <Button 
-          className="w-full bg-gradient-to-r from-amber-500 to-rose-500 hover:from-amber-600 hover:to-rose-600 text-white shadow-md"
-          onClick={onContribute}
-        >
-          <HandHeart className="mr-2 h-4 w-4" />
-          Contribuer librement
-        </Button>
-
-        {/* Contributors toggle button */}
-        {totalAmount > 0 && (
-          <>
-            <Button 
-              variant="ghost" 
-              size="sm" 
-              onClick={() => setShowContributors(!showContributors)}
-              className="w-full text-xs text-muted-foreground hover:text-foreground mt-2"
-            >
-              <Users className="mr-1.5 h-3.5 w-3.5" />
-              {showContributors ? 'Masquer' : 'Voir'} les contributeurs
-            </Button>
-            
-            {showContributors && (
-              <div className="mt-3">
-                <ContributorsList 
-                  giftId={POOL_ID}
-                  giftTitle={title}
-                  isCompleted={false}
-                  selectedCurrency={selectedCurrency}
-                  exchangeRates={exchangeRates}
-                  onBack={() => setShowContributors(false)}
-                />
-              </div>
-            )}
-          </>
-        )}
-      </CardContent>
     </Card>
   )
 }

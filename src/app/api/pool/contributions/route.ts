@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { addContribution, getContributions, getPaymentConfig } from '@/lib/google-sheets'
 import { sendContributionConfirmationEmail, sendContributionNotificationToAdmin } from '@/lib/resend'
 import { POOL_ID } from '@/lib/constants'
-import { isValidEmail, sanitizeName, sanitizeString, isValidPrice } from '@/lib/utils'
+import { validateContribution, isValidationError } from '@/lib/utils'
 import { getExchangeRates } from '@/lib/currency'
 
 // GET /api/pool/contributions - List all pool contributions
@@ -32,40 +32,25 @@ export async function GET() {
 // POST /api/pool/contributions - Contribute to the global pool
 export async function POST(request: NextRequest) {
   try {
-    const { 
-      name, 
-      email, 
-      amount: amountInJpy, 
-      message, 
-      currency
-    } = await request.json()
+    const body = await request.json()
     
-    // Validation
-    if (!name || !email || amountInJpy === undefined || amountInJpy === null) {
+    // Validate and sanitize input
+    const validation = validateContribution({
+      name: body.name,
+      email: body.email,
+      amount: body.amount,
+      message: body.message,
+      currency: body.currency,
+    })
+    
+    if (isValidationError(validation)) {
       return NextResponse.json(
-        { error: 'Missing required fields' },
-        { status: 400 }
+        { error: validation.error },
+        { status: validation.status }
       )
     }
     
-    if (!isValidEmail(email)) {
-      return NextResponse.json(
-        { error: 'Invalid email format' },
-        { status: 400 }
-      )
-    }
-    
-    if (!isValidPrice(amountInJpy) || amountInJpy < 100) {
-      return NextResponse.json(
-        { error: 'Invalid or too small amount (minimum 100 JPY)' },
-        { status: 400 }
-      )
-    }
-    
-    // Sanitize inputs
-    const sanitizedName = sanitizeName(name)
-    const sanitizedMessage = sanitizeString(message || '')
-    const sanitizedEmail = email.trim().toLowerCase()
+    const { name: sanitizedName, email: sanitizedEmail, amount: amountInJpy, message: sanitizedMessage, currency } = validation
     
     // Save contribution to pool (now returns { id, cancelToken })
     const { id: contributionId, cancelToken } = await addContribution({ 
@@ -89,7 +74,7 @@ export async function POST(request: NextRequest) {
         contributorName: sanitizedName,
         contributorEmail: sanitizedEmail,
         amountInJpy,
-        currency: currency || 'JPY', // Default to JPY if not provided
+        currency,
         message: sanitizedMessage || undefined,
         cancelToken,
       }

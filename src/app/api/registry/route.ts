@@ -6,8 +6,8 @@ import { getExchangeRates } from '@/lib/currency'
  * Registry API - Fetch all registry data in one call
  * GET /api/registry
  * 
- * Returns: gifts, listInfo, exchangeRates
- * This reduces serverless function invocations from 3 to 2
+ * Returns: gifts (with contributors already included), listInfo, exchangeRates
+ * Single batch fetch - contributors are loaded by getGifts()
  */
 export async function GET() {
   try {

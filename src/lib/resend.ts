@@ -107,7 +107,7 @@ function generatePaymentInstructionsHtml(
   return `
     <div style="margin: 24px 0;">
       <p style="margin: 0 0 4px 0; color: #1a202c; font-size: 16px; font-weight: 600;">Montant : ${formattedAmount}</p>
-      <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 14px;">Envoyez votre participation via :</p>
+      <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 14px;">Petit rappel : n'oubliez pas d'envoyer votre participation via :</p>
       ${sections.join('')}
     </div>
   `

@@ -65,6 +65,12 @@ Open [http://localhost:3000](http://localhost:3000) 🎉
 ID | Nom | Description | Prix | Image | Catégorie | Lien | Cagnotte | Montant Collecté | Réservé | Réservé Par | Email | Date Réservation | Occasion
 ```
 
+> ⚠️ **IMPORTANT**: Add a special gift with ID `POOL` for free contributions:
+> ```
+> POOL | Contribution libre 💝 | Pour nous aider librement | 0 | (empty) | autre | (empty) | OUI | 0 | NON | (empty) | (empty) | (empty) | NON
+> ```
+> This gift is **required** for the free contribution feature to work. It will not be displayed in the public gift list.
+
 **Sheet "Reservations"**:
 ```
 ID | ID Cadeau | Nom | Email | Message | Date
@@ -118,6 +124,35 @@ paypalMeUsername           | votrepseudo
 6. Name it (e.g., "tanjo-sheets")
 7. Click on the created account, then **Keys > Add Key > Create new key > JSON**
 8. Download the JSON file
+
+---
+
+### ⚠️ REQUIRED: Add POOL Gift for Free Contributions
+
+**Before starting the app**, you MUST add a special gift in your "Cadeaux" sheet:
+
+| Column | Value |
+|--------|-------|
+| ID | `POOL` |
+| Nom | Contribution libre 💝 |
+| Description | Pour nous aider librement |
+| Prix | 0 |
+| Image | *(empty)* |
+| Catégorie | autre |
+| Lien | *(empty)* |
+| Cagnotte | OUI |
+| Montant Collecté | 0 |
+| Réservé | NON |
+| Réservé Par | *(empty)* |
+| Email | *(empty)* |
+| Date Réservation | *(empty)* |
+| Occasion | NON |
+
+**Why?** This special gift allows users to make free contributions without selecting a specific gift. It's automatically hidden from the admin interface to prevent accidental deletion.
+
+**Note:** If you enable "Activer contribution libre = oui" in Config without adding the POOL gift, free contributions won't work and you'll see a warning in the browser console.
+
+---
 
 #### Share the Sheet
 

@@ -17,7 +17,7 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import type { Gift, GiftCategory } from '@/types'
-import { categoryLabels, allCategories } from '@/types'
+import { categoryLabels, allCategories, categoryIcons } from '@/types'
 import { 
   Plus, 
   Trash2, 
@@ -27,7 +27,8 @@ import {
   Gift as GiftIcon,
   Loader2,
   Home,
-  Users
+  Users,
+  Sparkles as SparklesIcon,
 } from 'lucide-react'
 import Link from 'next/link'
 import { ImagePicker } from '@/components/image-picker'
@@ -228,7 +229,9 @@ export default function AdminPage() {
   }
   
   // Filter gifts by category, occasion, and availability
+  // Also hide POOL gift (special gift for free contributions)
   const filteredGifts = gifts
+    .filter(g => g.id !== 'POOL') // Hide POOL from admin to prevent accidental deletion
     .filter(g => selectedCategory === 'all' || g.category === selectedCategory)
     .filter(g => !showOccasionOnly || g.isOccasion)
     .filter(g => !showAvailableOnly || !g.isReserved)
@@ -236,11 +239,11 @@ export default function AdminPage() {
   // Login screen
   if (!isAuthenticated) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-slate-50 to-slate-100">
+      <div className="min-h-screen flex items-center justify-center bg-linear-to-br from-slate-50 to-slate-100">
         <Card className="w-full max-w-md mx-4">
           <CardHeader className="text-center">
-            <div className="mx-auto w-12 h-12 bg-rose-100 rounded-full flex items-center justify-center mb-4">
-              <Lock className="h-6 w-6 text-rose-500" />
+            <div className="mx-auto w-12 h-12 bg-red-500 rounded-full flex items-center justify-center mb-4">
+              <Lock className="h-6 w-6 text-accent-red" />
             </div>
             <CardTitle>Administration</CardTitle>
             <CardDescription>
@@ -261,7 +264,7 @@ export default function AdminPage() {
                   required
                 />
               </div>
-              <Button type="submit" className="w-full bg-rose-500 hover:bg-rose-600">
+              <Button type="submit" className="w-full bg-accent-red hover:bg-accent-red/90">
                 Connexion
               </Button>
             </form>
@@ -303,11 +306,11 @@ export default function AdminPage() {
       </header>
 
       {/* Content */}
-      <main className="container mx-auto px-4 md:px-6 py-8">
+      <main className="container mx-auto py-8">
         {/* Top section: title + add button */}
         <div className="flex justify-between items-center mb-6">
           <h2 className="text-xl font-semibold">Mes cadeaux</h2>
-          <Button onClick={() => { resetForm(); setShowAddDialog(true); }} className="bg-rose-500 hover:bg-rose-600">
+          <Button onClick={() => { resetForm(); setShowAddDialog(true); }} className="bg-accent-red hover:bg-accent-red/90">
             <Plus className="mr-2 h-4 w-4" />
             Ajouter un cadeau
           </Button>
@@ -319,20 +322,24 @@ export default function AdminPage() {
             {/* Category buttons */}
             <div className="overflow-x-auto pb-2 flex-1">
               <div className="flex gap-2 min-w-max">
-                {allCategories.map((category) => (
-                  <Button
-                    key={category}
-                    variant={selectedCategory === category ? 'default' : 'outline'}
-                    size="sm"
-                    onClick={() => setSelectedCategory(category)}
-                    className={selectedCategory === category 
-                      ? 'bg-rose-500 hover:bg-rose-600' 
-                      : ''
-                    }
-                  >
-                    {category === 'all' ? '✨ Tous' : categoryLabels[category]}
-                  </Button>
-                ))}
+                {allCategories.map((category) => {
+                  const Icon = category === 'all' ? SparklesIcon : categoryIcons[category]
+                  return (
+                    <Button
+                      key={category}
+                      variant={selectedCategory === category ? 'default' : 'outline'}
+                      size="sm"
+                      onClick={() => setSelectedCategory(category)}
+                      className={selectedCategory === category 
+                        ? 'bg-accent-red hover:bg-accent-red/90 flex items-center gap-1.5' 
+                        : 'flex items-center gap-1.5'
+                      }
+                    >
+                      <Icon className="h-4 w-4" />
+                      {category === 'all' ? 'Tous' : categoryLabels[category]}
+                    </Button>
+                  )
+                })}
               </div>
             </div>
 
@@ -366,35 +373,35 @@ export default function AdminPage() {
         {/* Gifts list */}
         {isLoading ? (
           <div className="flex justify-center py-12">
-            <Loader2 className="h-8 w-8 animate-spin text-rose-500" />
+            <Loader2 className="h-8 w-8 animate-spin text-accent-red" />
           </div>
         ) : gifts.length === 0 ? (
           <Card className="text-center py-12">
             <CardContent>
               <GiftIcon className="h-12 w-12 mx-auto text-muted-foreground/30 mb-4" />
               <p className="text-muted-foreground mb-4">Aucun cadeau pour le moment</p>
-              <Button onClick={() => setShowAddDialog(true)} className="bg-rose-500 hover:bg-rose-600">
+              <Button onClick={() => setShowAddDialog(true)} className="bg-accent-red hover:bg-accent-red/90">
                 <Plus className="mr-2 h-4 w-4" />
                 Ajouter votre premier cadeau
               </Button>
             </CardContent>
           </Card>
         ) : (
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+          <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-4 space-y-4">
             {filteredGifts.map((gift) => (
-              <Card key={gift.id} className="overflow-hidden">
-                <div className="aspect-video bg-muted relative">
+              <Card key={gift.id} className="overflow-hidden break-inside-avoid mb-4">
+                <div className="relative bg-muted">
                   {gift.imageUrl ? (
                     // eslint-disable-next-line @next/next/no-img-element
-                    <img src={gift.imageUrl} alt={gift.title} className="w-full h-full object-cover" />
+                    <img src={gift.imageUrl} alt={gift.title} className="w-full h-auto object-cover" />
                   ) : (
-                    <div className="w-full h-full flex items-center justify-center">
-                      <GiftIcon className="h-8 w-8 text-muted-foreground/30" />
+                    <div className="aspect-square w-full flex items-center justify-center">
+                      <GiftIcon className="h-12 w-12 text-muted-foreground/30" />
                     </div>
                   )}
                   {gift.isReserved && (
                     <div className="absolute top-2 right-2 flex flex-col gap-1 items-end">
-                      <Badge className="bg-green-500">Réservé</Badge>
+                      <Badge className="bg-white">Réservé</Badge>
                       {gift.reservedBy && (
                         <Badge variant="secondary" className="text-xs">
                           {gift.reservedBy}
@@ -415,7 +422,7 @@ export default function AdminPage() {
                   </div>
                   <p className="text-sm text-muted-foreground line-clamp-2 mb-2">{gift.description}</p>
                   <div className="flex items-center justify-between">
-                    <span className="font-semibold text-rose-500">{formatJpy(gift.price)}</span>
+                    <span className="font-semibold text-accent-red">{formatJpy(gift.price)}</span>
                     <div className="flex gap-1">
                       <Button variant="ghost" size="icon-sm" onClick={() => openEditDialog(gift)}>
                         <Pencil className="h-4 w-4" />
@@ -565,7 +572,7 @@ export default function AdminPage() {
             <Button
               onClick={editingGift ? handleUpdateGift : handleAddGift}
               disabled={!form.title || !form.price || isLoading}
-              className="bg-rose-500 hover:bg-rose-600"
+              className="bg-accent-red hover:bg-accent-red/90"
             >
               {isLoading ? (
                 <Loader2 className="mr-2 h-4 w-4 animate-spin" />

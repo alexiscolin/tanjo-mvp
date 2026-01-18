@@ -94,9 +94,9 @@ export default function CancelContributionPage({
   // Loading state
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white flex items-center justify-center p-4">
+      <div className="min-h-screen bg-linear-to-b from-accent-red/10 to-white flex items-center justify-center p-4">
         <div className="text-center">
-          <Loader2 className="h-12 w-12 animate-spin text-rose-400 mx-auto mb-4" />
+          <Loader2 className="h-12 w-12 animate-spin text-accent-red mx-auto mb-4" />
           <p className="text-muted-foreground">Chargement...</p>
         </div>
       </div>
@@ -147,10 +147,10 @@ export default function CancelContributionPage({
 
   // Main cancellation form
   return (
-    <div className="min-h-screen bg-gradient-to-b from-rose-50 to-white flex items-center justify-center p-4">
+    <div className="min-h-screen bg-linear-to-b from-accent-red/10 to-white flex items-center justify-center p-4">
       <div className="max-w-md w-full bg-white rounded-2xl shadow-lg overflow-hidden">
         {/* Header */}
-        <div className="bg-gradient-to-r from-rose-400 to-pink-400 p-6 text-white text-center">
+        <div className="bg-linear-to-r from-accent-red to-accent-red/80 p-6 text-white text-center">
           <XCircle className="h-12 w-12 mx-auto mb-3 opacity-90" />
           <h1 className="text-xl font-bold">Annuler ma participation</h1>
         </div>
@@ -160,11 +160,11 @@ export default function CancelContributionPage({
           {contribution && (
             <>
               {/* Contribution summary */}
-              <div className="bg-rose-50 rounded-xl p-4 mb-6">
+              <div className="bg-accent-red/10 rounded-xl p-4 mb-6">
                 <h2 className="font-semibold text-lg mb-2">{contribution.giftTitle}</h2>
                 <div className="space-y-1 text-sm text-muted-foreground">
                   <p>
-                    <span className="text-rose-500 font-medium">{formatPrice(contribution.amount)}</span>
+                    <span className="text-accent-red font-medium">{formatPrice(contribution.amount)}</span>
                     {' '}par {contribution.name}
                   </p>
                   <p>Le {formatDate(contribution.createdAt)}</p>

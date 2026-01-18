@@ -87,7 +87,7 @@ export default function ContributionsPage() {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-rose-500 mx-auto mb-4"></div>
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-red mx-auto mb-4"></div>
           <p className="text-muted-foreground">Chargement des contributions...</p>
         </div>
       </div>
@@ -95,7 +95,7 @@ export default function ContributionsPage() {
   }
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-rose-50 via-white to-pink-50 py-8 px-4">
+    <div className="min-h-screen bg-linear-to-br from-accent-red/10 via-white to-accent-red/5 py-8 px-4">
       <div className="max-w-7xl mx-auto">
         {/* Header */}
         <div className="mb-8">
@@ -115,9 +115,9 @@ export default function ContributionsPage() {
             <div className="flex items-center justify-between">
               <div>
                 <p className="text-sm text-muted-foreground mb-1">Total collecté</p>
-                <p className="text-2xl font-bold text-rose-600">{formatJpy(totalAmount)}</p>
+                <p className="text-2xl font-bold text-accent-red">{formatJpy(totalAmount)}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-rose-500 opacity-50" />
+              <DollarSign className="h-8 w-8 text-accent-red opacity-50" />
             </div>
           </Card>
 
@@ -203,7 +203,7 @@ export default function ContributionsPage() {
                       <td className="px-4 py-3 text-sm font-medium">{contrib.name}</td>
                       <td className="px-4 py-3 text-sm text-muted-foreground">{contrib.email}</td>
                       <td className="px-4 py-3 text-sm">{contrib.giftTitle}</td>
-                      <td className="px-4 py-3 text-sm font-semibold text-right text-rose-600">
+                      <td className="px-4 py-3 text-sm font-semibold text-right text-accent-red">
                         {formatJpy(contrib.amount)}
                       </td>
                       <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate">

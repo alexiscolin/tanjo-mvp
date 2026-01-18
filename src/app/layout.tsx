@@ -1,5 +1,5 @@
 import type { Metadata } from "next";
-import { Playfair_Display, DM_Sans } from "next/font/google";
+import { Playfair_Display, DM_Sans, Hina_Mincho } from "next/font/google";
 import "./globals.css";
 
 const serif = Playfair_Display({
@@ -11,6 +11,13 @@ const serif = Playfair_Display({
 const sans = DM_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
+  display: "swap",
+});
+
+const japanese = Hina_Mincho({
+  variable: "--font-japanese",
+  subsets: ["latin"],
+  weight: "400",
   display: "swap",
 });
 
@@ -30,7 +37,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={`${serif.variable} ${sans.variable} font-sans antialiased`}>
+      <body className={`${serif.variable} ${sans.variable} ${japanese.variable} font-sans antialiased bg-surface`}>
         {children}
       </body>
     </html>

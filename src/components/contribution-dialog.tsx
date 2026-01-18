@@ -23,10 +23,11 @@ interface ContributionDialogProps {
   gift: GiftType | null
   open: boolean
   onOpenChange: (open: boolean) => void
-  onSuccess?: () => void
+  onSuccess?: (contribution: { giftId: string; name: string; amount: number; message?: string }) => void
+  onCancel?: () => void // Separate callback for cancellations
   selectedCurrency: Currency
   exchangeRates: ExchangeRates
-  mode: 'contribute' | 'reserve' // ← NEW: Type de contribution
+  mode: 'contribute' | 'reserve'
 }
 
 export function ContributionDialog({ 
@@ -34,6 +35,7 @@ export function ContributionDialog({
   open, 
   onOpenChange, 
   onSuccess, 
+  onCancel,
   selectedCurrency, 
   exchangeRates,
   mode 
@@ -61,7 +63,7 @@ export function ContributionDialog({
   const formatPrice = (jpy: number) => formatCurrency(jpy, selectedCurrency, exchangeRates, true)
   
   // Helper to convert JPY to display currency (whole units, already rounded by convertFromJpy)
-  const AmountToDisplay = (jpy: number) => 
+  const amountToDisplay = (jpy: number) => 
     selectedCurrency === CURRENCY.JPY 
       ? Math.round(jpy)
       : convertFromJpy(jpy, selectedCurrency, exchangeRates, 'toWholeUnits')
@@ -74,7 +76,7 @@ export function ContributionDialog({
         const data = await response.json()
         
         if (data.suggestedContributionsJpy) {
-          setSuggestedAmounts(data.suggestedContributionsJpy.map(AmountToDisplay))
+          setSuggestedAmounts(data.suggestedContributionsJpy.map(amountToDisplay))
         }
         
         if (data.payment) {
@@ -91,17 +93,17 @@ export function ContributionDialog({
   useEffect(() => {
     if (open && gift && suggestedAmounts.length > 0) {
       if (isReservation) {
-        setAmount(AmountToDisplay(gift.price))
+        setAmount(amountToDisplay(gift.price))
       } else {
-        const remaining = AmountToDisplay(remainingAmount)
+        const remaining = amountToDisplay(remainingAmount)
         const defaultAmt = remaining > 0 ? remaining : (suggestedAmounts[1] ?? suggestedAmounts[0])
         setAmount(defaultAmt)
       }
     }
-  }, [open, gift, remainingAmount, isReservation, suggestedAmounts])
+  }, [open, gift, remainingAmount, isReservation, suggestedAmounts, selectedCurrency, exchangeRates])
   
   // Build suggested amounts list
-  const remaining = AmountToDisplay(remainingAmount)
+  const remaining = amountToDisplay(remainingAmount)
   const suggestedAmountsList = !isReservation && remaining > 0
     ? [remaining, ...suggestedAmounts].filter((amt, idx, arr) => arr.indexOf(amt) === idx).slice(0, 4)
     : suggestedAmounts.slice(0, 4)
@@ -151,8 +153,14 @@ export function ContributionDialog({
       setContributionId(data.contributionId)
       setIsSuccess(true)
       
+      // Call onSuccess with contribution data for optimistic update
       if (onSuccess) {
-        onSuccess()
+        onSuccess({
+          giftId: gift.id,
+          name: name.trim(),
+          amount: amountInJpy,
+          message: message?.trim() || undefined,
+        })
       }
       
     } catch (err) {
@@ -190,8 +198,8 @@ export function ContributionDialog({
       setContributionId(null)
       setSubmittedAmount(0)
       
-      if (onSuccess) {
-        onSuccess()
+      if (onCancel) {
+        onCancel()
       }
       
       handleClose()
@@ -295,9 +303,9 @@ export function ContributionDialog({
         <DialogHeader>
           <div className="flex items-center gap-2">
             {isReservation ? (
-              <Gift className="h-5 w-5 text-rose-500" />
+              <Gift className="h-5 w-5 text-accent-red" />
             ) : (
-              <HandHeart className="h-5 w-5 text-rose-500" />
+              <HandHeart className="h-5 w-5 text-accent-red" />
             )}
             <DialogTitle>
               {isReservation ? 'Réserver ce cadeau' : 'Participer à la cagnotte'}
@@ -313,16 +321,19 @@ export function ContributionDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="p-4 bg-rose-50 rounded-lg mb-4">
-          <h4 className="font-medium mb-1">{gift.title}</h4>
+        <div className="pt-4 rounded-lg mb-2">
+          <h4 className="font-bold text-lg leading-tight mb-1">{gift.title}</h4>
+          {gift.imageUrl && (
+            <img src={gift.imageUrl} alt={gift.title} className="w-full aspect-video object-cover rounded-xl mb-2" />
+          )}
           {!isReservation && gift.isPot && gift.price > 0 && (
             <div className="space-y-1 mb-2">
               <p className="text-sm text-muted-foreground">
-                {formatPrice(gift.potCurrentAmount || 0)} collectés (<span className="text-rose-500 font-medium">{Math.round(progressPercentage)}%</span>)
+                {formatPrice(gift.potCurrentAmount || 0)} collectés (<span className="text-accent-red font-medium">{Math.round(progressPercentage)}%</span>)
               </p>
               <div className="w-full bg-gray-200 h-2 rounded-full overflow-hidden">
                 <div 
-                  className="bg-linear-to-r from-rose-400 to-pink-500 h-full transition-all duration-500"
+                  className="bg-linear-to-r from-accent-red to-accent-red/80 h-full transition-all duration-500"
                   style={{ width: `${progressPercentage}%` }}
                 />
               </div>
@@ -330,11 +341,11 @@ export function ContributionDialog({
           )}
           {/* Show remaining amount for gifts with target, or total collected for pool */}
           {gift.id === POOL_ID && gift.isPot ? (
-            <p className="text-lg font-semibold text-rose-500">
+            <p className="text-lg font-semibold text-accent-red">
               {formatPrice(gift.potCurrentAmount || 0)} collectés
             </p>
           ) : gift.price > 0 && (
-            <p className="text-lg font-semibold text-rose-500">
+            <p className="text-lg font-semibold text-accent-red">
               {isReservation ? formatPrice(gift.price) : `${formatPrice(remainingAmount)} restants`}
             </p>
           )}

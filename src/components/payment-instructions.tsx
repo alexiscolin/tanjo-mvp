@@ -87,7 +87,7 @@ export function PaymentInstructions({
         )}
 
         {paymentConfig.paypayQrUrl && (
-          <div className="flex justify-center p-4 bg-white rounded-lg border">
+          <div className="flex justify-center p-4 bg-surface rounded-lg border">
             <Image 
               src={paymentConfig.paypayQrUrl.startsWith('http') 
                 ? paymentConfig.paypayQrUrl 
@@ -165,7 +165,7 @@ export function PaymentInstructions({
             <div className="w-full border-t" />
           </div>
           <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-white px-2 text-muted-foreground">ou (gratuit)</span>
+            <span className="bg-surface px-2 text-muted-foreground">ou (gratuit)</span>
           </div>
         </div>
       )}
