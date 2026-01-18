@@ -157,8 +157,8 @@ export default function HomePage() {
         {/* Images */}
         <div className="absolute inset-0 pointer-events-none">
           {/* Image 1 - Large, top left */}
-          <div className="absolute top-4 left-1/4 w-80 h-96 z-10">
-            <div className="w-full h-full bg-linear-to-br from-neutral-light-1 to-neutral-light-2 rounded-sm shadow-lg">
+          <div className="absolute top-4 left-1/4 w-80 h-96 z-10 -rotate-4">
+            <div className="w-full h-full bg-linear-to-br from-neutral-light-1 to-neutral-light-2 rounded-lg shadow-lg">
               <div className="w-full h-full flex items-center justify-center text-6xl text-dark/10">
                 誕
               </div>
@@ -166,8 +166,8 @@ export default function HomePage() {
           </div>
 
           {/* Image 2 - Medium, center right */}
-          <div className="absolute top-64 right-20 w-64 h-80 z-10">
-            <div className="w-full h-full bg-linear-to-br from-neutral-light-3 to-neutral-light-4 rounded-sm shadow-lg">
+          <div className="absolute top-64 right-20 w-64 h-80 z-10 rotate-16">
+            <div className="w-full h-full bg-linear-to-br from-neutral-light-3 to-neutral-light-4 rounded-ld¥g shadow-lg">
               <div className="w-full h-full flex items-center justify-center text-5xl text-dark/10">
                 生
               </div>
@@ -175,8 +175,8 @@ export default function HomePage() {
           </div>
 
           {/* Image 3 - Small, bottom left */}
-          <div className="absolute top-116 left-32 w-48 h-60 -z-10">
-            <div className="w-full h-full bg-linear-to-br from-neutral-light-5 to-neutral-light-6 rounded-sm shadow-lg">
+          <div className="absolute top-116 left-32 w-48 h-60 -z-10 -rotate-24">
+            <div className="w-full h-full bg-linear-to-br from-neutral-light-5 to-neutral-light-6 rounded-lg shadow-lg">
               <div className="w-full h-full flex items-center justify-center text-4xl text-dark/10">
                 祝
               </div>

@@ -71,9 +71,9 @@ function generatePaymentInstructionsHtml(
   // PayPay (Japan only - JPY)
   if (paymentConfig.paypayId && isJPY) {
     sections.push(`
-      <div style="background: #fff5f5; padding: 16px; border-radius: 8px; margin: 12px 0; border: 1px solid #fecaca;">
-        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1a202c;">PayPay</p>
-        <p style="margin: 0; font-size: 14px; color: #4a5568;">ID : ${paymentConfig.paypayId}</p>
+      <div style="background: #faf8f5; padding: 16px; border-radius: 10px; margin: 12px 0; border: 1px solid #e8e3dd;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1a1a1a;">PayPay</p>
+        <p style="margin: 0; font-size: 14px; color: #8e8e8e;">ID : ${paymentConfig.paypayId}</p>
       </div>
     `)
   }
@@ -82,10 +82,10 @@ function generatePaymentInstructionsHtml(
   if (paymentConfig.weroPhone && isEUR) {
     const phone = deobfuscatePhone(paymentConfig.weroPhone)
     sections.push(`
-      <div style="background: #f0fdf4; padding: 16px; border-radius: 8px; margin: 12px 0; border: 1px solid #bbf7d0;">
-        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1a202c;">Wero</p>
-        <p style="margin: 0 0 4px 0; font-size: 14px; color: #4a5568;">Numéro : ${phone}</p>
-        <p style="margin: 0; font-size: 13px; color: #6b7280;">Message : ${contributorName}</p>
+      <div style="background: #faf8f5; padding: 16px; border-radius: 10px; margin: 12px 0; border: 1px solid #e8e3dd;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1a1a1a;">Wero</p>
+        <p style="margin: 0 0 4px 0; font-size: 14px; color: #8e8e8e;">Numéro : ${phone}</p>
+        <p style="margin: 0; font-size: 13px; color: #8e8e8e;">Message : ${contributorName}</p>
       </div>
     `)
   }
@@ -93,9 +93,9 @@ function generatePaymentInstructionsHtml(
   // PayPal (International - EUR/USD, or fallback if no other method)
   if (paymentConfig.paypalMeUsername && (isInternational || sections.length === 0)) {
     sections.push(`
-      <div style="background: #eff6ff; padding: 16px; border-radius: 8px; margin: 12px 0; border: 1px solid #bfdbfe;">
-        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1a202c;">PayPal</p>
-        <p style="margin: 0; font-size: 14px; color: #4a5568;">paypal.me/${paymentConfig.paypalMeUsername}</p>
+      <div style="background: #faf8f5; padding: 16px; border-radius: 10px; margin: 12px 0; border: 1px solid #e8e3dd;">
+        <p style="margin: 0 0 8px 0; font-size: 14px; font-weight: 600; color: #1a1a1a;">PayPal</p>
+        <p style="margin: 0; font-size: 14px; color: #8e8e8e;">paypal.me/${paymentConfig.paypalMeUsername}</p>
       </div>
     `)
   }
@@ -106,8 +106,8 @@ function generatePaymentInstructionsHtml(
 
   return `
     <div style="margin: 24px 0;">
-      <p style="margin: 0 0 4px 0; color: #1a202c; font-size: 16px; font-weight: 600;">Montant : ${formattedAmount}</p>
-      <p style="margin: 0 0 12px 0; color: #6b7280; font-size: 14px;">Petit rappel : n'oubliez pas d'envoyer votre participation via :</p>
+      <p style="margin: 0 0 4px 0; color: #1a1a1a; font-size: 16px; font-weight: 600;">Montant : ${formattedAmount}</p>
+      <p style="margin: 0 0 12px 0; color: #8e8e8e; font-size: 14px;">Petit rappel : n'oubliez pas d'envoyer votre participation via :</p>
       ${sections.join('')}
     </div>
   `
@@ -119,9 +119,9 @@ function generatePaymentInstructionsHtml(
 function generateCancelSection(cancelToken: string): string {
   const cancelUrl = `${SITE_URL}/cancel/${cancelToken}`
   return `
-    <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e5e7eb;">
-      <p style="margin: 0; font-size: 13px; color: #6b7280; text-align: center;">
-        <a href="${cancelUrl}" style="color: #dc2626; text-decoration: underline;">Annuler ma participation</a>
+    <div style="margin-top: 24px; padding-top: 20px; border-top: 1px solid #e8e3dd;">
+      <p style="margin: 0; font-size: 13px; color: #8e8e8e; text-align: center;">
+        <a href="${cancelUrl}" style="color: #c41e3a; text-decoration: underline;">Annuler ma participation</a>
       </p>
     </div>
   `
@@ -158,10 +158,10 @@ export async function sendContributionConfirmationEmail(
     const goalInUserCurrency = formatCurrency(giftData.goal, currency, exchangeRates)
     
     progressSection = `
-      <div style="background: #f7fafc; border-radius: 8px; overflow: hidden; margin: 12px 0;">
-        <div style="background: linear-gradient(90deg, #ed64a6, #f687b3); height: 8px; width: ${Math.min(percentage, 100)}%;"></div>
+      <div style="background: #e8e3dd; border-radius: 10px; overflow: hidden; margin: 12px 0;">
+        <div style="background: #c41e3a; height: 8px; width: ${Math.min(percentage, 100)}%;"></div>
       </div>
-      <p style="margin: 0; font-size: 14px; color: #718096;">
+      <p style="margin: 0; font-size: 14px; color: #8e8e8e;">
         ${totalCollectedInUserCurrency} / ${goalInUserCurrency} (${percentage}%)
       </p>
     `
@@ -177,22 +177,22 @@ export async function sendContributionConfirmationEmail(
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
       
       <div style="text-align: center; margin-bottom: 32px;">
-        <h1 style="color: #ed64a6; margin: 0 0 8px 0; font-weight: 600;">Merci ${data.contributorName}</h1>
-        <p style="color: #718096; margin: 0;">Votre ${isPool ? 'contribution' : 'participation'} a bien été enregistrée.</p>
+        <h1 style="color: #c41e3a; margin: 0 0 8px 0; font-weight: 600;">Merci ${data.contributorName}</h1>
+        <p style="color: #8e8e8e; margin: 0;">Votre ${isPool ? 'contribution' : 'participation'} a bien été enregistrée.</p>
       </div>
 
       <!-- Gift Card -->
-      <div style="background: #fef5f8; padding: 24px; border-radius: 12px; margin: 24px 0; border: 1px solid #fecdd3;">
+      <div style="background: #faf8f5; padding: 24px; border-radius: 10px; margin: 24px 0; border: 1px solid #e8e3dd;">
         ${giftImageUrl ? `
           <div style="text-align: center; margin-bottom: 16px;">
-            <img src="${giftImageUrl}" alt="${giftTitle}" style="max-width: 200px; max-height: 150px; border-radius: 8px; object-fit: cover;" />
+            <img src="${giftImageUrl}" alt="${giftTitle}" style="max-width: 200px; max-height: 150px; border-radius: 10px; object-fit: cover;" />
           </div>
         ` : ''}
         
-        <h2 style="margin: 0 0 8px 0; color: #1a202c; text-align: center; font-weight: 600; font-size: 20px;">${giftTitle}</h2>
+        <h2 style="margin: 0 0 8px 0; color: #1a1a1a; text-align: center; font-weight: 600; font-size: 20px;">${giftTitle}</h2>
         
         <div style="text-align: center; margin: 16px 0;">
-          <span style="font-size: 24px; font-weight: 600; color: #ed64a6;">
+          <span style="font-size: 24px; font-weight: 600; color: #c41e3a;">
             ${formatAmountForEmail(data, exchangeRates)}
           </span>
         </div>
@@ -200,8 +200,8 @@ export async function sendContributionConfirmationEmail(
         ${progressSection}
         
         ${data.message ? `
-          <div style="background: white; padding: 16px; border-radius: 8px; margin-top: 16px; border: 1px solid #e5e7eb;">
-            <p style="margin: 0; font-style: italic; color: #4a5568;">${data.message}</p>
+          <div style="background: white; padding: 16px; border-radius: 10px; margin-top: 16px; border: 1px solid #e8e3dd;">
+            <p style="margin: 0; font-style: italic; color: #8e8e8e;">${data.message}</p>
           </div>
         ` : ''}
       </div>
@@ -212,12 +212,12 @@ export async function sendContributionConfirmationEmail(
       <!-- Footer with cancel link -->
       ${generateCancelSection(data.cancelToken)}
 
-      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0 0 8px 0; font-size: 13px; color: #a0aec0;">
+      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e8e3dd;">
+        <p style="margin: 0 0 8px 0; font-size: 13px; color: #8e8e8e;">
           Email automatique de la liste de naissance.
         </p>
-        <p style="margin: 0; font-size: 12px; color: #a0aec0;">
-          Questions : <a href="https://camille.jaunebleu.co" style="color: #ed64a6; text-decoration: none;">camille.jaunebleu.co</a>
+        <p style="margin: 0; font-size: 12px; color: #8e8e8e;">
+          Questions : <a href="https://camille.jaunebleu.co" style="color: #c41e3a; text-decoration: none;">camille.jaunebleu.co</a>
         </p>
       </div>
     </body>
@@ -260,15 +260,15 @@ export async function sendContributionNotificationToAdmin(data: ContributionEmai
     const giftData = data as GiftContributionData
     const percentage = Math.round((giftData.totalCollected / giftData.goal) * 100)
     progressSection = `
-      <div style="background: #fef3c7; padding: 12px; border-radius: 8px; margin: 12px 0;">
+      <div style="background: #faf8f5; padding: 12px; border-radius: 10px; margin: 12px 0; border: 1px solid #e8e3dd;">
         <div style="display: flex; justify-content: space-between; align-items: center;">
-          <span style="font-size: 14px;">Progression:</span>
-          <span style="font-weight: bold; color: #d97706;">${percentage}%</span>
+          <span style="font-size: 14px; color: #1a1a1a;">Progression:</span>
+          <span style="font-weight: bold; color: #c41e3a;">${percentage}%</span>
         </div>
-        <div style="background: #fde68a; border-radius: 4px; overflow: hidden; margin-top: 8px;">
-          <div style="background: #f59e0b; height: 6px; width: ${Math.min(percentage, 100)}%;"></div>
+        <div style="background: #e8e3dd; border-radius: 10px; overflow: hidden; margin-top: 8px;">
+          <div style="background: #c41e3a; height: 6px; width: ${Math.min(percentage, 100)}%;"></div>
         </div>
-        <p style="margin: 8px 0 0 0; font-size: 13px; text-align: right;">
+        <p style="margin: 8px 0 0 0; font-size: 13px; text-align: right; color: #8e8e8e;">
           ${formatJpy(giftData.totalCollected)} / ${formatJpy(giftData.goal)}
         </p>
       </div>
@@ -284,59 +284,59 @@ export async function sendContributionNotificationToAdmin(data: ContributionEmai
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
       
-      <div style="background: #fef3c7; padding: 24px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #fde68a;">
-        <h1 style="margin: 0 0 8px 0; color: #92400e; font-weight: 600; font-size: 20px;">Nouvelle ${isPool ? 'contribution' : 'participation'}</h1>
-        <p style="margin: 0; font-size: 20px; font-weight: 600; color: #d97706;">
+      <div style="background: #faf8f5; padding: 24px; border-radius: 10px; margin-bottom: 24px; border: 1px solid #e8e3dd;">
+        <h1 style="margin: 0 0 8px 0; color: #1a1a1a; font-weight: 600; font-size: 20px;">Nouvelle ${isPool ? 'contribution' : 'participation'}</h1>
+        <p style="margin: 0; font-size: 20px; font-weight: 600; color: #c41e3a;">
           ${formatJpy(data.amountInJpy)}
         </p>
       </div>
 
       <!-- Contributor Info -->
-      <div style="background: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 24px; border: 1px solid #e5e7eb;">
-        <h3 style="margin: 0 0 16px 0; color: #1a202c; font-weight: 600; font-size: 16px;">Contributeur</h3>
+      <div style="background: #faf8f5; padding: 20px; border-radius: 10px; margin-bottom: 24px; border: 1px solid #e8e3dd;">
+        <h3 style="margin: 0 0 16px 0; color: #1a1a1a; font-weight: 600; font-size: 16px;">Contributeur</h3>
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
-            <td style="padding: 8px 0; color: #718096;">Nom</td>
-            <td style="padding: 8px 0; font-weight: 600;">${data.contributorName}</td>
+            <td style="padding: 8px 0; color: #8e8e8e;">Nom</td>
+            <td style="padding: 8px 0; font-weight: 600; color: #1a1a1a;">${data.contributorName}</td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #718096;">Email</td>
-            <td style="padding: 8px 0; color: #1a202c; word-break: break-all;">
+            <td style="padding: 8px 0; color: #8e8e8e;">Email</td>
+            <td style="padding: 8px 0; color: #1a1a1a; word-break: break-all;">
               ${data.contributorEmail}
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #718096;">Montant</td>
-            <td style="padding: 8px 0; font-weight: 600; color: #d97706;">${formatJpy(data.amountInJpy)}</td>
+            <td style="padding: 8px 0; color: #8e8e8e;">Montant</td>
+            <td style="padding: 8px 0; font-weight: 600; color: #c41e3a;">${formatJpy(data.amountInJpy)}</td>
           </tr>
           ${data.message ? `
           <tr>
-            <td style="padding: 8px 0; color: #718096; vertical-align: top;">Message</td>
-            <td style="padding: 8px 0; font-style: italic;">${data.message}</td>
+            <td style="padding: 8px 0; color: #8e8e8e; vertical-align: top;">Message</td>
+            <td style="padding: 8px 0; font-style: italic; color: #8e8e8e;">${data.message}</td>
           </tr>
           ` : ''}
         </table>
       </div>
 
       <!-- Gift Info -->
-      <div style="background: #fef5f8; padding: 20px; border-radius: 12px; border: 1px solid #fecdd3;">
-        <h3 style="margin: 0 0 16px 0; color: #1a202c; font-weight: 600; font-size: 16px;">Cadeau</h3>
+      <div style="background: #faf8f5; padding: 20px; border-radius: 10px; border: 1px solid #e8e3dd;">
+        <h3 style="margin: 0 0 16px 0; color: #1a1a1a; font-weight: 600; font-size: 16px;">Cadeau</h3>
         
         <div style="display: flex; gap: 16px; align-items: center;">
           ${giftImageUrl ? `
-            <img src="${giftImageUrl}" alt="${giftTitle}" style="width: 80px; height: 80px; border-radius: 8px; object-fit: cover;" />
+            <img src="${giftImageUrl}" alt="${giftTitle}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover;" />
           ` : ''}
           <div style="flex: 1;">
-            <h4 style="margin: 0 0 4px 0; font-weight: 600;">${giftTitle}</h4>
-            ${!isPool ? `<p style="margin: 0; color: #718096; font-size: 14px;">ID: ${data.giftId}</p>` : ''}
+            <h4 style="margin: 0 0 4px 0; font-weight: 600; color: #1a1a1a;">${giftTitle}</h4>
+            ${!isPool ? `<p style="margin: 0; color: #8e8e8e; font-size: 14px;">ID: ${data.giftId}</p>` : ''}
           </div>
         </div>
         
         ${progressSection}
       </div>
 
-      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0; font-size: 13px; color: #a0aec0;">
+      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e8e3dd;">
+        <p style="margin: 0; font-size: 13px; color: #8e8e8e;">
           Notification automatique
         </p>
       </div>
@@ -383,30 +383,30 @@ export async function sendCancellationConfirmationEmail(
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
       
       <div style="text-align: center; margin-bottom: 32px;">
-        <h1 style="color: #718096; margin: 0 0 8px 0;">Annulation confirmée</h1>
-        <p style="color: #a0aec0; margin: 0;">${name}, Votre participation a bien été annulée.</p>
+        <h1 style="color: #8e8e8e; margin: 0 0 8px 0;">Annulation confirmée</h1>
+        <p style="color: #8e8e8e; margin: 0;">${name}, Votre participation a bien été annulée.</p>
       </div>
 
-      <div style="background: #f7fafc; padding: 24px; border-radius: 16px; margin: 24px 0;">
-        <h2 style="margin: 0 0 16px 0; color: #1a202c;">${giftTitle}</h2>
-        <p style="margin: 0; color: #718096;">
-          Montant annulé: <strong>${formatJpy(amount)}</strong>
+      <div style="background: #faf8f5; padding: 24px; border-radius: 10px; margin: 24px 0; border: 1px solid #e8e3dd;">
+        <h2 style="margin: 0 0 16px 0; color: #1a1a1a;">${giftTitle}</h2>
+        <p style="margin: 0; color: #8e8e8e;">
+          Montant annulé: <strong style="color: #1a1a1a;">${formatJpy(amount)}</strong>
         </p>
       </div>
 
       ${feedback ? `
-        <div style="background: #fef5f8; padding: 20px; border-radius: 12px; margin: 24px 0; border: 1px solid #fecdd3;">
-          <h3 style="margin: 0 0 12px 0; color: #1a202c; font-size: 16px;">Votre message :</h3>
-          <p style="margin: 0; color: #4a5568; font-style: italic;">${feedback}</p>
+        <div style="background: #faf8f5; padding: 20px; border-radius: 10px; margin: 24px 0; border: 1px solid #e8e3dd;">
+          <h3 style="margin: 0 0 12px 0; color: #1a1a1a; font-size: 16px;">Votre message :</h3>
+          <p style="margin: 0; color: #8e8e8e; font-style: italic;">${feedback}</p>
         </div>
       ` : ''}
 
-      <p style="color: #718096; text-align: center;">
+      <p style="color: #8e8e8e; text-align: center;">
         Nous espérons vous revoir bientôt ! 💕
       </p>
 
-      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0; font-size: 13px; color: #a0aec0;">
+      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e8e3dd;">
+        <p style="margin: 0; font-size: 13px; color: #8e8e8e;">
           Cet email a été envoyé automatiquement par la liste de naissance.
         </p>
       </div>
@@ -446,45 +446,45 @@ export async function sendCancellationNotificationToAdmin(
     </head>
     <body style="font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif; max-width: 600px; margin: 0 auto; padding: 20px; background: #ffffff;">
       
-      <div style="background: #fed7d7; padding: 24px; border-radius: 16px; margin-bottom: 24px;">
-        <h1 style="margin: 0 0 8px 0; color: #c53030;">❌ Annulation de contribution</h1>
-        <p style="margin: 0; font-size: 20px; font-weight: bold; color: #e53e3e;">
+      <div style="background: #faf8f5; padding: 24px; border-radius: 10px; margin-bottom: 24px; border: 1px solid #e8e3dd;">
+        <h1 style="margin: 0 0 8px 0; color: #1a1a1a;">❌ Annulation de contribution</h1>
+        <p style="margin: 0; font-size: 20px; font-weight: bold; color: #c41e3a;">
           - ${formatJpy(amount)}
           </p>
         </div>
         
-      <div style="background: #f7fafc; padding: 20px; border-radius: 12px; margin-bottom: 24px;">
-        <h3 style="margin: 0 0 16px 0; color: #1a202c;">📋 Détails</h3>
+      <div style="background: #faf8f5; padding: 20px; border-radius: 10px; margin-bottom: 24px; border: 1px solid #e8e3dd;">
+        <h3 style="margin: 0 0 16px 0; color: #1a1a1a;">📋 Détails</h3>
         <table style="width: 100%; border-collapse: collapse;">
           <tr>
-            <td style="padding: 8px 0; color: #718096;">Personne:</td>
-            <td style="padding: 8px 0; font-weight: bold;">${name}</td>
+            <td style="padding: 8px 0; color: #8e8e8e;">Personne:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #1a1a1a;">${name}</td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #718096;">Email:</td>
-            <td style="padding: 8px 0; color: #1a202c; word-break: break-all;">
+            <td style="padding: 8px 0; color: #8e8e8e;">Email:</td>
+            <td style="padding: 8px 0; color: #1a1a1a; word-break: break-all;">
               ${email}
             </td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #718096;">Cadeau:</td>
-            <td style="padding: 8px 0;">${giftTitle}</td>
+            <td style="padding: 8px 0; color: #8e8e8e;">Cadeau:</td>
+            <td style="padding: 8px 0; color: #1a1a1a;">${giftTitle}</td>
           </tr>
           <tr>
-            <td style="padding: 8px 0; color: #718096;">Montant:</td>
-            <td style="padding: 8px 0; font-weight: bold; color: #e53e3e;">${formatJpy(amount)}</td>
+            <td style="padding: 8px 0; color: #8e8e8e;">Montant:</td>
+            <td style="padding: 8px 0; font-weight: bold; color: #c41e3a;">${formatJpy(amount)}</td>
           </tr>
           ${feedback ? `
           <tr>
-            <td style="padding: 8px 0; color: #718096; vertical-align: top;">Raison:</td>
-            <td style="padding: 8px 0; font-style: italic;">"${feedback}"</td>
+            <td style="padding: 8px 0; color: #8e8e8e; vertical-align: top;">Raison:</td>
+            <td style="padding: 8px 0; font-style: italic; color: #8e8e8e;">"${feedback}"</td>
           </tr>
           ` : ''}
         </table>
       </div>
 
-      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e2e8f0;">
-        <p style="margin: 0; font-size: 13px; color: #a0aec0;">
+      <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e8e3dd;">
+        <p style="margin: 0; font-size: 13px; color: #8e8e8e;">
           Notification automatique de la liste de naissance
         </p>
       </div>
