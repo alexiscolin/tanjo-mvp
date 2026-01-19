@@ -151,7 +151,6 @@ export async function sendContributionConfirmationEmail(
 
   const isPool = data.giftId === "POOL";
   const giftTitle = isPool ? "Contribution libre 💝" : (data as GiftContributionData).giftTitle;
-  const giftImageUrl = !isPool ? (data as GiftContributionData).giftImageUrl : undefined;
   const currency = (data.currency ?? CURRENCY.JPY) as Currency;
 
   let progressSection = "";
@@ -194,16 +193,6 @@ export async function sendContributionConfirmationEmail(
 
       <!-- Gift Card -->
       <div style="background: #faf8f5; padding: 24px; border-radius: 10px; margin: 24px 0; border: 1px solid #e8e3dd;">
-        ${
-          giftImageUrl
-            ? `
-          <div style="text-align: center; margin-bottom: 16px;">
-            <img src="${giftImageUrl}" alt="${giftTitle}" style="max-width: 200px; max-height: 150px; border-radius: 10px; object-fit: cover;" />
-          </div>
-        `
-            : ""
-        }
-
         <h2 style="margin: 0 0 8px 0; color: #1a1a1a; text-align: center; font-weight: 600; font-size: 20px;">${giftTitle}</h2>
 
         <div style="text-align: center; margin: 16px 0;">
@@ -274,7 +263,6 @@ export async function sendContributionNotificationToAdmin(data: ContributionEmai
 
   const isPool = data.giftId === "POOL";
   const giftTitle = isPool ? "Contribution libre 💝" : (data as GiftContributionData).giftTitle;
-  const giftImageUrl = !isPool ? (data as GiftContributionData).giftImageUrl : undefined;
 
   let progressSection = "";
 
@@ -349,18 +337,9 @@ export async function sendContributionNotificationToAdmin(data: ContributionEmai
       <div style="background: #faf8f5; padding: 20px; border-radius: 10px; border: 1px solid #e8e3dd;">
         <h3 style="margin: 0 0 16px 0; color: #1a1a1a; font-weight: 600; font-size: 16px;">Cadeau</h3>
 
-        <div style="display: flex; gap: 16px; align-items: center;">
-          ${
-            giftImageUrl
-              ? `
-            <img src="${giftImageUrl}" alt="${giftTitle}" style="width: 80px; height: 80px; border-radius: 10px; object-fit: cover;" />
-          `
-              : ""
-          }
-          <div style="flex: 1;">
-            <h4 style="margin: 0 0 4px 0; font-weight: 600; color: #1a1a1a;">${giftTitle}</h4>
-            ${!isPool ? `<p style="margin: 0; color: #8e8e8e; font-size: 14px;">ID: ${data.giftId}</p>` : ""}
-          </div>
+        <div>
+          <h4 style="margin: 0 0 4px 0; font-weight: 600; color: #1a1a1a;">${giftTitle}</h4>
+          ${!isPool ? `<p style="margin: 0; color: #8e8e8e; font-size: 14px;">ID: ${data.giftId}</p>` : ""}
         </div>
 
         ${progressSection}
