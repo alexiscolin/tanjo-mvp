@@ -27,10 +27,31 @@ const japanese = Hina_Mincho({
   adjustFontFallback: false, // Japanese fonts don't have reliable fallbacks
 });
 
+const title = "Nathalie x Camille x Alexis : La Liste";
+const description =
+  "Camille verra bientôt le jour sous le soleil d'Okinawa. Découvrez son petit monde d'ici à votre rencontre !";
+
 export const metadata: Metadata = {
-  title: "Nathalie x Camille x Alexis : La Liste",
-  description:
-    "Camille verra bientôt le jour sous le soleil d'Okinawa. Découvrez son petit monde d'ici à votre rencontre !",
+  title,
+  description,
+  openGraph: {
+    title,
+    description,
+    images: [
+      {
+        url: "/camille-og.png",
+        width: 1200,
+        height: 630,
+        alt: "Nathalie x Camille x Alexis",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary_large_image",
+    title,
+    description,
+    images: ["/camille-og.png"],
+  },
   robots: {
     index: false,
     follow: false,
