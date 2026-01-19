@@ -170,6 +170,16 @@ const eslintConfig = defineConfig([
       '@typescript-eslint/no-explicit-any': 'warn',
       // Consistent type definitions
       '@typescript-eslint/consistent-type-definitions': ['warn', 'interface'],
+      // Prefer nullish coalescing over logical OR
+      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      // Prefer optional chain over && checks
+      '@typescript-eslint/prefer-optional-chain': 'warn',
+      // Consistent type imports
+      '@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],
+      // No unnecessary type assertions
+      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+      // Prefer as const over literal types
+      '@typescript-eslint/prefer-as-const': 'warn',
 
       // ==================== NAMING CONVENTIONS ====================
       '@typescript-eslint/naming-convention': [
@@ -206,17 +216,22 @@ const eslintConfig = defineConfig([
     },
   },
   // Disable type-aware rules for config files not in TypeScript project
+  // These files (*.config.mjs, *.config.js) are not included in tsconfig.json
+  // so they don't have TypeScript type information available for linting
   {
     files: ['*.config.mjs', '*.config.js'],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
-        projectService: false,
+        projectService: false, // Disable TypeScript project service for these files
       },
     },
     rules: {
+      // Disable rules that require TypeScript type information
       '@typescript-eslint/naming-convention': 'off',
       '@typescript-eslint/prefer-nullish-coalescing': 'off',
+      '@typescript-eslint/prefer-optional-chain': 'off',
+      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
     },
   },
 ])
