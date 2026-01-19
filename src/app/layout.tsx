@@ -6,19 +6,25 @@ const serif = Playfair_Display({
   variable: "--font-serif",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
+  adjustFontFallback: true,
 });
 
 const sans = DM_Sans({
   variable: "--font-sans",
   subsets: ["latin"],
   display: "swap",
+  preload: true,
+  adjustFontFallback: true,
 });
 
 const japanese = Hina_Mincho({
   variable: "--font-japanese",
-  subsets: ["latin"],
+  subsets: ["latin", "latin-ext"],
   weight: "400",
   display: "swap",
+  preload: true,
+  adjustFontFallback: false, // Japanese fonts don't have reliable fallbacks
 });
 
 export const metadata: Metadata = {
