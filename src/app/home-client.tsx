@@ -222,9 +222,18 @@ export function HomeClient() {
   const stats = {
     total: gifts.filter((g) => g.id !== POOL_ID).length,
     reserved: gifts.filter((g) => g.id !== POOL_ID && g.isReserved).length,
-    contributions: gifts
-      .filter((g) => g.id !== POOL_ID)
-      .reduce((total, gift) => total + (gift.contributors?.length ?? 0), 0),
+    contributions: gifts.reduce((total, gift) => {
+      // For pots (including the main pool): count all contributors
+      if (gift.contributors && gift.contributors.length > 0) {
+        return total + gift.contributors.length;
+      }
+      // For simple reservations (not pools): count 1 if reserved
+      if (!gift.isPot && gift.isReserved && gift.reservedBy) {
+        return total + 1;
+      }
+
+      return total;
+    }, 0),
   };
 
   return (
