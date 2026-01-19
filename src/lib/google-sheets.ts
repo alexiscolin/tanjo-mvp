@@ -57,7 +57,7 @@ export async function getGifts(): Promise<Gift[]> {
   const [giftsResponse, contributionsResponse] = await Promise.all([
     sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEETS.GIFTS}!A2:N`,
+      range: `${SHEETS.GIFTS}!A2:O`,
     }),
     sheets.spreadsheets.values.get({
       spreadsheetId: SPREADSHEET_ID,
@@ -103,6 +103,7 @@ export async function getGifts(): Promise<Gift[]> {
       description: row[2] ?? "",
       price: parseInt(row[3]) || 0,
       imageUrl: row[4] ?? "",
+      imageRatio: row[14] ? parseFloat(row[14]) : undefined,
       category: row[5] ?? "autre",
       externalUrl: row[6] ?? undefined,
       isPot,
@@ -125,7 +126,7 @@ export async function addGift(
 
   await sheets.spreadsheets.values.append({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.GIFTS}!A:N`,
+    range: `${SHEETS.GIFTS}!A:O`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [
@@ -144,6 +145,7 @@ export async function addGift(
           "", // reservedEmail
           "", // reservedAt
           gift.isOccasion ? "OUI" : "NON", // isOccasion
+          gift.imageRatio ?? "", // imageRatio (width/height)
         ],
       ],
     },
@@ -162,7 +164,7 @@ export async function updateGift(id: string, updates: Partial<Gift>): Promise<vo
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.GIFTS}!A${row}:N${row}`,
+    range: `${SHEETS.GIFTS}!A${row}:O${row}`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [
@@ -181,6 +183,7 @@ export async function updateGift(id: string, updates: Partial<Gift>): Promise<vo
           gift.reservedEmail ?? "",
           gift.reservedAt ?? "",
           gift.isOccasion ? "OUI" : "NON",
+          gift.imageRatio ?? "",
         ],
       ],
     },
@@ -199,10 +202,10 @@ export async function deleteGift(id: string): Promise<void> {
 
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.GIFTS}!A${row}:N${row}`,
+    range: `${SHEETS.GIFTS}!A${row}:O${row}`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
-      values: [["", "", "", "", "", "", "", "", "", "", "", "", "", ""]],
+      values: [["", "", "", "", "", "", "", "", "", "", "", "", "", "", ""]],
     },
   });
 }

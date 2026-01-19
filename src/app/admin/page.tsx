@@ -54,6 +54,7 @@ export default function AdminPage() {
     description: "",
     price: "",
     imageUrl: "",
+    imageRatio: undefined as number | undefined,
     category: "autre" as GiftCategory,
     externalUrl: "",
     isOccasion: false,
@@ -120,6 +121,7 @@ export default function AdminPage() {
       description: "",
       price: "",
       imageUrl: "",
+      imageRatio: undefined,
       category: "autre",
       externalUrl: "",
       isOccasion: false,
@@ -136,8 +138,14 @@ export default function AdminPage() {
         body: JSON.stringify({
           password: storedPassword,
           gift: {
-            ...form,
+            title: form.title,
+            description: form.description,
             price: priceJpy,
+            imageUrl: form.imageUrl,
+            imageRatio: form.imageRatio,
+            category: form.category,
+            externalUrl: form.externalUrl,
+            isOccasion: form.isOccasion,
             isPot: priceJpy >= potThreshold, // Auto-enable pot mode if above threshold
           },
         }),
@@ -172,8 +180,14 @@ export default function AdminPage() {
         body: JSON.stringify({
           password: storedPassword,
           updates: {
-            ...form,
+            title: form.title,
+            description: form.description,
             price: priceJpy,
+            imageUrl: form.imageUrl,
+            imageRatio: form.imageRatio,
+            category: form.category,
+            externalUrl: form.externalUrl,
+            isOccasion: form.isOccasion,
             isPot: priceJpy >= potThreshold, // Auto-enable pot mode if above threshold
           },
         }),
@@ -228,6 +242,7 @@ export default function AdminPage() {
       description: gift.description,
       price: String(gift.price),
       imageUrl: gift.imageUrl,
+      imageRatio: gift.imageRatio,
       category: gift.category,
       externalUrl: gift.externalUrl ?? "",
       isOccasion: gift.isOccasion ?? false,
@@ -558,7 +573,7 @@ export default function AdminPage() {
 
             <ImagePicker
               value={form.imageUrl}
-              onChange={(url) => setForm({ ...form, imageUrl: url })}
+              onChange={(url, ratio) => setForm({ ...form, imageUrl: url, imageRatio: ratio })}
             />
 
             <div>

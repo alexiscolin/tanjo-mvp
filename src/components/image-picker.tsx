@@ -23,7 +23,7 @@ import { Label } from "@/components/ui/label";
 
 interface ImagePickerProps {
   value: string;
-  onChange: (url: string) => void;
+  onChange: (url: string, ratio?: number) => void;
 }
 
 export function ImagePicker({ value, onChange }: ImagePickerProps) {
@@ -58,10 +58,8 @@ export function ImagePicker({ value, onChange }: ImagePickerProps) {
       }
 
       if (data.isDirectImage) {
-        // Direct image URL - use it immediately
-        onChange(data.imageUrl);
-        setInputUrl("");
-        setShowInput(false);
+        // Direct image URL - calculate ratio then use it
+        calculateRatioAndApply(data.imageUrl);
       } else {
         // Page with multiple images - show picker
         if (data.images && data.images.length > 0) {
@@ -80,16 +78,38 @@ export function ImagePicker({ value, onChange }: ImagePickerProps) {
     }
   };
 
+  /**
+   * Calculate image ratio and call onChange with both URL and ratio
+   */
+  const calculateRatioAndApply = (imageUrl: string) => {
+    const img = new Image();
+
+    img.onload = () => {
+      const ratio = img.naturalWidth / img.naturalHeight;
+
+      onChange(imageUrl, ratio);
+      setInputUrl("");
+      setShowInput(false);
+    };
+
+    img.onerror = () => {
+      // Fallback: use URL without ratio if image fails to load
+      onChange(imageUrl, undefined);
+      setInputUrl("");
+      setShowInput(false);
+    };
+
+    img.src = imageUrl;
+  };
+
   const handleSelectImage = (imageUrl: string) => {
-    onChange(imageUrl);
     setShowPicker(false);
-    setInputUrl("");
     setScrapedImages([]);
-    setShowInput(false);
+    calculateRatioAndApply(imageUrl);
   };
 
   const handleClearImage = () => {
-    onChange("");
+    onChange("", undefined);
     setInputUrl("");
     setError("");
     setShowInput(false);

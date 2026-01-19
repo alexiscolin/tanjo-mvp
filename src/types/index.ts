@@ -18,6 +18,7 @@ export interface Gift {
   description: string;
   price: number; // in yens (JPY - base currency)
   imageUrl: string;
+  imageRatio?: number; // width/height ratio for masonry layout
   category: GiftCategory;
   externalUrl?: string;
   isPot: boolean; // collective pot

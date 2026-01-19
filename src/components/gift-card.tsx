@@ -46,14 +46,19 @@ export function GiftCard({
       onClick={() => !gift.isReserved && (gift.isPot ? onContribute?.(gift) : onReserve?.(gift))}
     >
       {/* Image */}
-      <div className="bg-muted relative mb-3 overflow-hidden rounded-xl">
+      <div
+        className="bg-muted relative mb-3 overflow-hidden rounded-xl"
+        style={{
+          aspectRatio: gift.imageUrl ? (gift.imageRatio ?? 4 / 3) : undefined,
+        }}
+      >
         {gift.imageUrl ? (
           // eslint-disable-next-line @next/next/no-img-element
           <img
             src={gift.imageUrl}
             alt={gift.title}
             className={cn(
-              "h-auto w-full object-cover transition-transform duration-500",
+              "h-full w-full object-cover transition-transform duration-500",
               !gift.isReserved && "group-hover:scale-105"
             )}
           />
