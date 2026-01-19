@@ -59,13 +59,13 @@ A simple and elegant baby registry built with Next.js, Google Sheets, and Resend
 **Sheet "Cadeaux"** (first row = headers):
 
 ```
-ID | Nom | Description | Prix | Image | Catégorie | Lien | Cagnotte | Montant Collecté | Réservé | Réservé Par | Email | Date Réservation | Occasion
+ID | Nom | Description | Prix | Image | Catégorie | Lien | Cagnotte | Montant Collecté | Réservé | Réservé Par | Email | Date Réservation | Occasion | Ratio Image
 ```
 
 > ⚠️ **IMPORTANT**: Add a special gift with ID `POOL` for free contributions:
 >
 > ```
-> POOL | Contribution libre 💝 | Pour nous aider librement | 0 | (empty) | autre | (empty) | OUI | 0 | NON | (empty) | (empty) | (empty) | NON
+> POOL | Contribution libre 💝 | Pour nous aider librement | 0 | (empty) | autre | (empty) | OUI | 0 | NON | (empty) | (empty) | (empty) | NON | (empty)
 > ```
 >
 > This gift is **required** for the free contribution feature to work. It will not be displayed in the public gift list.
