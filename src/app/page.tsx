@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect, useCallback } from 'react'
+import { useState, useEffect, useCallback, useRef, useMemo } from 'react'
 import { Button } from '@/components/ui/button'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
@@ -8,6 +8,9 @@ import { GiftCard } from '@/components/gift-card'
 import { FreeContributionCard } from '@/components/free-contribution-card'
 import { ContributionDialog } from '@/components/contribution-dialog'
 import { CurrencySelector } from '@/components/currency-selector'
+import { ScrollToTopButton } from '@/components/scroll-to-top-button'
+import { PriceFilter, type PriceSort, sortGiftsByPrice } from '@/components/price-filter'
+import { Masonry } from 'masonic'
 import type { Gift, GiftCategory, ListInfo } from '@/types'
 import { categoryLabels, allCategories, categoryIcons } from '@/types'
 import {Gift as GiftIcon, Loader2, Sparkles as SparklesIcon } from 'lucide-react'
@@ -25,6 +28,8 @@ export default function HomePage() {
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({ EUR: 0.00625, USD: 0.0069 })
   const [showOccasionOnly, setShowOccasionOnly] = useState(false)
   const [showAvailableOnly, setShowAvailableOnly] = useState(false)
+  const [priceSort, setPriceSort] = useState<PriceSort>('none')
+  const cardsSectionRef = useRef<HTMLElement>(null)
 
   const fetchGifts = useCallback(async () => {
     try {
@@ -87,20 +92,81 @@ export default function HomePage() {
     setSelectedCurrency(preferredCurrency)
   }, [])
 
+  // Reset price sort when currency changes
+  useEffect(() => {
+    setPriceSort('none')
+  }, [selectedCurrency])
+
   useEffect(() => {
     fetchGifts()
   }, [fetchGifts])
 
-  const filteredGifts = gifts
-    .filter(g => g.id !== POOL_ID) // Hide POOL gift (has its own FreeContributionCard)
-    .filter(g => selectedCategory === 'all' || g.category === selectedCategory)
-    .filter(g => !showOccasionOnly || g.isOccasion)
-    .filter(g => !showAvailableOnly || !g.isReserved)
+  const filteredGifts = sortGiftsByPrice(
+    gifts
+      .filter(g => g.id !== POOL_ID) // Hide POOL gift (has its own FreeContributionCard)
+      .filter(g => selectedCategory === 'all' || g.category === selectedCategory)
+      .filter(g => !showOccasionOnly || g.isOccasion)
+      .filter(g => !showAvailableOnly || !g.isReserved),
+    priceSort,
+    selectedCurrency,
+    exchangeRates
+  )
 
   // Extract POOL gift from gifts (if it exists)
   const poolGift = gifts.find(g => g.id === POOL_ID)
   const freeContributionTotal = poolGift?.potCurrentAmount || 0
   const freeContributionContributors = poolGift?.contributors || []
+
+  // Prepare items for masonry (include free contribution card if needed)
+  // Memoize to prevent recreation when dialog opens
+  const masonryItems = useMemo(() => {
+    const freeContributionItem = listInfo?.enableFreeContribution && selectedCategory === 'all' 
+      ? [{ type: 'free-contribution' as const, id: 'free-contribution', data: { title: listInfo.freeContributionTitle || 'Contribution libre 💝', totalAmount: freeContributionTotal, contributors: freeContributionContributors } }]
+      : [];
+    
+    return [
+      ...freeContributionItem,
+      ...filteredGifts.map(g => ({ type: 'gift' as const, id: g.id, data: g }))
+    ];
+  }, [listInfo?.enableFreeContribution, selectedCategory, listInfo?.freeContributionTitle, freeContributionTotal, freeContributionContributors, filteredGifts]);
+
+  // Memoize render function to prevent Masonry from recalculating
+  const renderMasonryItem = useCallback(({ data: item }: { data: { type: 'free-contribution' | 'gift'; id: string; data: any } }) => {
+    if (item.type === 'free-contribution') {
+      return (
+        <FreeContributionCard
+          title={item.data.title}
+          totalAmount={item.data.totalAmount}
+          contributors={item.data.contributors}
+          onContribute={() => {
+            const fakeGift: Gift = {
+              id: POOL_ID,
+              title: item.data.title,
+              description: 'Montant libre pour nous aider',
+              price: 0,
+              imageUrl: '',
+              category: 'autre',
+              isPot: true,
+              potCurrentAmount: item.data.totalAmount,
+              isReserved: false,
+            }
+            setContributeGift(fakeGift)
+          }}
+          selectedCurrency={selectedCurrency}
+          exchangeRates={exchangeRates}
+        />
+      )
+    }
+    return (
+      <GiftCard 
+        gift={item.data} 
+        onReserve={setReserveGift}
+        onContribute={setContributeGift}
+        selectedCurrency={selectedCurrency}
+        exchangeRates={exchangeRates}
+      />
+    )
+  }, [selectedCurrency, exchangeRates, setReserveGift, setContributeGift]);
 
   // Debug: Log if POOL is not found
   useEffect(() => {
@@ -136,15 +202,14 @@ export default function HomePage() {
   return (
     <div>
       {/* Hero Section */}
-      <section>
-        {/* Logo fake en haut à gauche */}
+      <section className="overflow-x-clip relative">
         <div className="fixed top-6 left-6 z-20">
           <div className="text-2xl font-bold tracking-tight text-dark">
             CAMILLE
           </div>
         </div>
 
-        {/* Currency selector discret en haut à droite */}
+        {/* Currency selector */}
         <div className="fixed top-6 right-6 z-20">
           <div className="opacity-60 hover:opacity-100 transition-opacity">
             <CurrencySelector
@@ -155,10 +220,10 @@ export default function HomePage() {
         </div>
 
         {/* Images */}
-        <div className="absolute inset-0 pointer-events-none">
+        <div className="xl:container mx-auto px-4 md:px-6 absolute inset-0 pointer-events-none">
           {/* Image 1 - Large, top left */}
-          <div className="absolute top-4 left-1/4 w-80 h-96 z-10 -rotate-4">
-            <div className="w-full h-full bg-linear-to-br from-neutral-light-1 to-neutral-light-2 rounded-lg shadow-lg">
+          <div className="absolute md:top-4 top-16 left-1/4 w-48 h-60 md:w-80 md:h-96 z-10 -rotate-4">
+            <div className="w-full h-full bg-neutral-light-3 rounded-lg shadow-lg">
               <div className="w-full h-full flex items-center justify-center text-6xl text-dark/10">
                 誕
               </div>
@@ -166,8 +231,8 @@ export default function HomePage() {
           </div>
 
           {/* Image 2 - Medium, center right */}
-          <div className="absolute top-64 right-20 w-64 h-80 z-10 rotate-16">
-            <div className="w-full h-full bg-linear-to-br from-neutral-light-3 to-neutral-light-4 rounded-ld¥g shadow-lg">
+          <div className="absolute top-64 xl:right-0 md:right-38 right-8 w-32 h-40 md:w-64 md:h-80 z-10 rotate-16">
+            <div className="w-full h-full bg-neutral-light-3 rounded-lg shadow-lg">
               <div className="w-full h-full flex items-center justify-center text-5xl text-dark/10">
                 生
               </div>
@@ -175,8 +240,8 @@ export default function HomePage() {
           </div>
 
           {/* Image 3 - Small, bottom left */}
-          <div className="absolute top-116 left-32 w-48 h-60 -z-10 -rotate-24">
-            <div className="w-full h-full bg-linear-to-br from-neutral-light-5 to-neutral-light-6 rounded-lg shadow-lg">
+          <div className="absolute md:top-116 top-84 left-13 md:left-32 xl:left-0 w-24 h-32 md:w-48 md:h-60 -z-10 -rotate-24">
+            <div className="w-full h-full bg-neutral-light-3 rounded-lg shadow-lg">
               <div className="w-full h-full flex items-center justify-center text-4xl text-dark/10">
                 祝
               </div>
@@ -188,15 +253,15 @@ export default function HomePage() {
         <div className="relative z-10 w-full mx-auto justify-center pt-52 flex items-center">
           <div className="w-full">
             {/* Japanese Text */}
-            <div className="mb-24">
-              <div className="text-xl md:text-8xl lg:text-[14vw] font-bold text-accent-red mb-6 leading-none tracking-tight">
-                <div className="flex flex-col md:flex-row items-baseline-last justify-center gap-10">
+            <div className="mb-24 lx:container mx-auto px-4 md:px-6">
+              <div className="text-[19vw] md:text-[16vw] lg:text-[clamp(1rem,14vw,14rem)] font-bold text-accent-red mb-6 leading-none tracking-tight">
+                <div className="flex flex-col md:flex-row md:items-baseline-last justify-center gap-4 xl:gap-8 text-center md:text-left items-center">
                   <span className="font-japanese">ようこそ</span>
-                  <span className="text-2xl leading-tight text-dark/70 tracking-tight max-w-[14vw] mt-10 block">
+                  <span className="text-lg lg:text-xl xl:text-2xl leading-tight text-dark/70 tracking-tight md:max-w-[18vw] lg:max-w-[18vw] xl:max-w-84 md:mt-10 block">
                     {listInfo?.subtitle || 'Bienvenue sur notre liste de naissance'}
                   </span>
                 </div>
-                <span className="pl-[30vw] font-japanese">カミーユ</span>
+                <span className="mx-auto block text-center md:pl-52 xl:pl-96 font-japanese">カミーユ</span>
               </div>
             </div>
 
@@ -222,12 +287,12 @@ export default function HomePage() {
       </section>
 
       {/* Content */}
-      <main className="max-w-7xl px-4 mx-auto md:px-6 pb-8 md:pb-12">
+      <main ref={cardsSectionRef} className="max-w-7xl px-4 mx-auto md:px-6 pb-8 md:pb-12">
         {/* Category filters + Toggles */}
-        <div className="mb-24 sticky top-18 2xl:top-6 z-10">
-          <div className="flex flex-col lg:flex-row lg:items-center justify-center gap-8 mb-4">
+        <div className="lg:mb-24 md:mb-16 mb-8 lg:sticky lg:top-18 2xl:top-6 z-10">
+          <div className="flex flex-col lg:flex-row lg:items-center justify-center lg:gap-8 gap-6 mb-4">
             {/* Category buttons */}
-            <div className="overflow-x-auto flex-1">
+            <div className="overflow-x-auto flex-1 scrollbar-hide">
               <div className="flex gap-2 min-w-max">
                 {availableCategories.map((category) => {
                   const Icon = category === 'all' ? SparklesIcon : categoryIcons[category]
@@ -250,7 +315,7 @@ export default function HomePage() {
               </div>
             </div>
 
-            {/* Toggles */}
+            {/* Toggles + Price filter */}
             <div className="flex flex-wrap items-center gap-4 shrink-0">
               <div className="flex items-center gap-1.5">
                 <Switch
@@ -273,6 +338,11 @@ export default function HomePage() {
                   Disponibles
                 </Label>
               </div>
+
+              <PriceFilter
+                sortOrder={priceSort}
+                onSortChange={setPriceSort}
+              />
             </div>
           </div>
         </div>
@@ -288,47 +358,16 @@ export default function HomePage() {
             </p>
           </div>
         ) : (
-          <div className="columns-1 sm:columns-2 lg:columns-3 xl:columns-4 gap-6 space-y-10">
-            {/* Free contribution card (always first if enabled) */}
-            {listInfo?.enableFreeContribution && selectedCategory === 'all' && (
-              <div className="break-inside-avoid">
-                <FreeContributionCard
-                  title={listInfo.freeContributionTitle || 'Contribution libre 💝'}
-                  totalAmount={freeContributionTotal}
-                  contributors={freeContributionContributors}
-                  onContribute={() => {
-                    const fakeGift: Gift = {
-                      id: POOL_ID,
-                      title: listInfo.freeContributionTitle || 'Contribution libre 💝',
-                      description: 'Montant libre pour nous aider',
-                      price: 0,
-                      imageUrl: '', // Empty string is OK - GiftCard handles it with fallback
-                      category: 'autre',
-                      isPot: true,
-                      potCurrentAmount: freeContributionTotal,
-                      isReserved: false,
-                    }
-                    setContributeGift(fakeGift)
-                  }}
-                  selectedCurrency={selectedCurrency}
-                  exchangeRates={exchangeRates}
-                />
-              </div>
-            )}
-            
-            {/* Regular gift cards */}
-            {filteredGifts.map((gift) => (
-              <div key={gift.id} className="break-inside-avoid">
-                <GiftCard 
-                  gift={gift} 
-                  onReserve={setReserveGift}
-                  onContribute={setContributeGift}
-                  selectedCurrency={selectedCurrency}
-                  exchangeRates={exchangeRates}
-                />
-              </div>
-            ))}
-          </div>
+          <Masonry
+            key={`${selectedCategory}-${showOccasionOnly}-${showAvailableOnly}-${priceSort}`}
+            items={masonryItems}
+            itemKey={(item) => item.id}
+            render={renderMasonryItem}
+            columnWidth={280}
+            columnGutter={26}
+            rowGutter={48}
+            overscanBy={2}
+          />
         )}
       </main>
 
@@ -336,6 +375,9 @@ export default function HomePage() {
       <footer className="py-8 text-center text-sm text-muted-foreground">
         <p>Fait avec amour pour {listInfo?.babyName || 'notre bébé'}</p>
       </footer>
+
+      {/* Scroll to top button (mobile only) */}
+      <ScrollToTopButton targetRef={cardsSectionRef} />
 
       {/* Dialogs */}
       <ContributionDialog

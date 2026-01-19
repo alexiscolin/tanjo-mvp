@@ -271,7 +271,7 @@ export function ContributionDialog({
               variant="outline"
               onClick={handleCancelContribution}
               disabled={isCancelling}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto cursor-pointer"
             >
               {isCancelling ? (
                 <>
@@ -285,7 +285,7 @@ export function ContributionDialog({
             <Button
               type="button"
               onClick={handleSuccessClose}
-              className="w-full sm:w-auto"
+              className="w-full sm:w-auto cursor-pointer"
             >
               Fermer
             </Button>
@@ -447,7 +447,7 @@ export function ContributionDialog({
           )}
 
           <DialogFooter>
-            <Button type="submit" disabled={isSubmitting} className="w-full">
+            <Button type="submit" disabled={isSubmitting} className="w-full cursor-pointer">
               {isSubmitting ? (
                 <>
                   <Loader2 className="mr-2 h-4 w-4 animate-spin" />

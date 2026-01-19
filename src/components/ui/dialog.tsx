@@ -47,39 +47,31 @@ function DialogContent({
   children: React.ReactNode
   onClose: () => void
 } & React.HTMLAttributes<HTMLDivElement>) {
-  const handleOverlayClick = (e: React.MouseEvent) => {
-    // Only close if clicking directly on the overlay
-    if (e.target === e.currentTarget) {
-      onClose()
-    }
-  }
-
   return (
-    <div className="fixed inset-0 z-50" onClick={handleOverlayClick}>
-      {/* Overlay */}
+    <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
+      {/* Overlay - click here to close */}
       <div 
         className="fixed inset-0 bg-black/50 animate-in fade-in-0"
         aria-hidden="true"
+        onClick={onClose}
       />
       {/* Content */}
-      <div className="fixed inset-0 flex items-center justify-center p-4 pointer-events-none">
-        <div
-          {...props}
-          className={cn(
-            "relative bg-background w-full max-w-lg rounded-xl border p-6 shadow-lg animate-in fade-in-0 zoom-in-95 pointer-events-auto",
-            className
-          )}
-          onClick={(e) => e.stopPropagation()}
+      <div
+        {...props}
+        className={cn(
+          "relative bg-background w-full max-w-lg rounded-xl border p-6 shadow-lg animate-in fade-in-0 zoom-in-95 z-10",
+          className
+        )}
+        onClick={(e) => e.stopPropagation()}
+      >
+        {children}
+        <button
+          onClick={onClose}
+          className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
         >
-          {children}
-          <button
-            onClick={onClose}
-            className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring"
-          >
-            <XIcon className="h-4 w-4" />
-            <span className="sr-only">Fermer</span>
-          </button>
-        </div>
+          <XIcon className="h-5 w-5" />
+          <span className="sr-only">Fermer</span>
+        </button>
       </div>
     </div>
   )
