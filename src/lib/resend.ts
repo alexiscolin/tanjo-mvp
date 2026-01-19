@@ -222,10 +222,10 @@ export async function sendContributionConfirmationEmail(
 
       <div style="text-align: center; margin-top: 32px; padding-top: 24px; border-top: 1px solid #e8e3dd;">
         <p style="margin: 0 0 8px 0; font-size: 13px; color: #8e8e8e;">
-          Email automatique de la liste de naissance.
+          Email automatique de la liste de naissance de Nathalie x Camille x Alexis.
         </p>
         <p style="margin: 0; font-size: 12px; color: #8e8e8e;">
-          Questions : <a href="https://camille.jaunebleu.co" style="color: #c41e3a; text-decoration: none;">camille.jaunebleu.co</a>
+          <a href="https://camille.jaunebleu.co" style="color: #c41e3a; text-decoration: none;">camille.jaunebleu.co</a>
         </p>
       </div>
     </body>
