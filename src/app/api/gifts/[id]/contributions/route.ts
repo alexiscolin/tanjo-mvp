@@ -1,46 +1,42 @@
-import { NextRequest, NextResponse } from 'next/server'
-import { addContribution, getGifts, getContributions, getPaymentConfig } from '@/lib/google-sheets'
-import { sendContributionConfirmationEmail, sendContributionNotificationToAdmin } from '@/lib/resend'
-import { validateContribution, isValidationError } from '@/lib/utils'
-import { getExchangeRates, CURRENCY } from '@/lib/currency'
+import type { NextRequest } from "next/server";
+import { NextResponse } from "next/server";
+import { getExchangeRates } from "@/lib/currency";
+import { addContribution, getGifts, getContributions, getPaymentConfig } from "@/lib/google-sheets";
+import {
+  sendContributionConfirmationEmail,
+  sendContributionNotificationToAdmin,
+} from "@/lib/resend";
+import { validateContribution, isValidationError } from "@/lib/utils";
 
 // GET /api/gifts/[id]/contributions - List all contributors for a gift
-export async function GET(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function GET(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
-    const contributions = await getContributions(id)
-    
+    const { id } = await params;
+    const contributions = await getContributions(id);
+
     // Return anonymized data (hide email for privacy)
-    const anonymizedContributions = contributions.map(c => ({
+    const anonymizedContributions = contributions.map((c) => ({
       id: c.id,
       name: c.name,
       amount: c.amount,
       message: c.message,
       createdAt: c.createdAt,
-    }))
-    
-    return NextResponse.json({ contributions: anonymizedContributions })
+    }));
+
+    return NextResponse.json({ contributions: anonymizedContributions });
   } catch (error) {
-    console.error('Error fetching contributions:', error)
-    return NextResponse.json(
-      { error: 'Error fetching contributions' },
-      { status: 500 }
-    )
+    console.error("Error fetching contributions:", error);
+
+    return NextResponse.json({ error: "Error fetching contributions" }, { status: 500 });
   }
 }
 
 // POST /api/gifts/[id]/contributions - Contribute to a gift (pot or full reservation)
-export async function POST(
-  request: NextRequest,
-  { params }: { params: Promise<{ id: string }> }
-) {
+export async function POST(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params
-    const body = await request.json()
-    
+    const { id } = await params;
+    const body = await request.json();
+
     // Validate and sanitize input
     const validation = validateContribution({
       name: body.name,
@@ -48,90 +44,85 @@ export async function POST(
       amount: body.amount,
       message: body.message,
       currency: body.currency,
-    })
-    
+    });
+
     if (isValidationError(validation)) {
-      return NextResponse.json(
-        { error: validation.error },
-        { status: validation.status }
-      )
+      return NextResponse.json({ error: validation.error }, { status: validation.status });
     }
-    
-    const { name: sanitizedName, email: sanitizedEmail, amount: amountInJpy, message: sanitizedMessage, currency } = validation
-    
+
+    const {
+      name: sanitizedName,
+      email: sanitizedEmail,
+      amount: amountInJpy,
+      message: sanitizedMessage,
+      currency,
+    } = validation;
+
     // Check that gift exists
-    const gifts = await getGifts()
-    const gift = gifts.find(g => g.id === id)
-    
+    const gifts = await getGifts();
+    const gift = gifts.find((g) => g.id === id);
+
     if (!gift) {
-      return NextResponse.json(
-        { error: 'Gift not found' },
-        { status: 404 }
-      )
+      return NextResponse.json({ error: "Gift not found" }, { status: 404 });
     }
-    
+
     // Check if it's already fully reserved
     if (gift.isReserved && !gift.isPot) {
-      return NextResponse.json(
-        { error: 'This gift has already been reserved' },
-        { status: 400 }
-      )
+      return NextResponse.json({ error: "This gift has already been reserved" }, { status: 400 });
     }
-    
+
     // Save contribution (now returns { id, cancelToken })
-    const { id: contributionId, cancelToken } = await addContribution({ 
-      giftId: id, 
-      name: sanitizedName, 
-      email: sanitizedEmail, 
-      amount: amountInJpy, 
-      message: sanitizedMessage 
-    })
-    
+    const { id: contributionId, cancelToken } = await addContribution({
+      giftId: id,
+      name: sanitizedName,
+      email: sanitizedEmail,
+      amount: amountInJpy,
+      message: sanitizedMessage,
+    });
+
     // Calculate new total
-    const newTotal = (gift.potCurrentAmount || 0) + amountInJpy
-    
+    const newTotal = (gift.potCurrentAmount ?? 0) + amountInJpy;
+
     // Get payment config for emails
-    const paymentConfig = await getPaymentConfig()
-    
+    const paymentConfig = await getPaymentConfig();
+
     // Get exchange rates for currency conversion in emails
-    const exchangeRates = await getExchangeRates()
-    
+    const exchangeRates = await getExchangeRates();
+
     // Send emails (don't crash if it fails)
     try {
       const emailData = {
         giftId: id,
         giftTitle: gift.title,
-        giftImageUrl: gift.imageUrl || undefined,
+        giftImageUrl: gift.imageUrl ?? undefined,
         contributorName: sanitizedName,
         contributorEmail: sanitizedEmail,
-        amountInJpy,              // JPY for database storage
+        amountInJpy, // JPY for database storage
         currency,
-        message: sanitizedMessage || undefined,
+        message: sanitizedMessage ?? undefined,
         totalCollected: newTotal,
         goal: gift.price,
         cancelToken,
-      }
-      
+      };
+
       await Promise.all([
         sendContributionConfirmationEmail(emailData, paymentConfig, exchangeRates),
         sendContributionNotificationToAdmin(emailData),
-      ])
+      ]);
     } catch (emailError) {
-      console.error('Email sending error (non-blocking):', emailError)
+      console.error("Email sending error (non-blocking):", emailError);
     }
-    
-    return NextResponse.json({ 
+
+    return NextResponse.json({
       success: true,
       contributionId,
       newTotal,
       percentage: Math.round((newTotal / gift.price) * 100),
       giftPrice: gift.price,
-    })
+    });
   } catch (error) {
-    console.error('Error contributing:', error)
-    return NextResponse.json(
-      { error: 'Error contributing' },
-      { status: 500 }
-    )
+    console.error("Error contributing:", error);
+
+    return NextResponse.json({ error: "Error contributing" }, { status: 500 });
   }
 }

@@ -1,18 +1,18 @@
-'use client'
+"use client";
 
-import { useState } from 'react'
-import { type Currency, type ExchangeRates, formatCurrency } from '@/lib/currency'
-import { type Contribution } from '@/types'
-import { cn } from '@/lib/utils'
+import { useState } from "react";
+import { type Currency, type ExchangeRates, formatCurrency } from "@/lib/currency";
+import { cn } from "@/lib/utils";
+import { type Contribution } from "@/types";
 
 interface ContributorsProgressProps {
-  currentAmount: number
-  goalAmount?: number // Optional - if provided, shows "X / Y €"
-  contributors: Contribution[]
-  selectedCurrency: Currency
-  exchangeRates: ExchangeRates
-  variant?: 'default' | 'inverted' // default = dark text, inverted = white text
-  progressPercentage?: number // For pot gifts with goal
+  currentAmount: number;
+  goalAmount?: number; // Optional - if provided, shows "X / Y €"
+  contributors: Contribution[];
+  selectedCurrency: Currency;
+  exchangeRates: ExchangeRates;
+  variant?: "default" | "inverted"; // default = dark text, inverted = white text
+  progressPercentage?: number; // For pot gifts with goal
 }
 
 export function ContributorsProgress({
@@ -21,46 +21,47 @@ export function ContributorsProgress({
   contributors,
   selectedCurrency,
   exchangeRates,
-  variant = 'default',
+  variant = "default",
   progressPercentage = 100,
 }: ContributorsProgressProps) {
-  const [showContributors, setShowContributors] = useState(false)
-  const formatPrice = (cents: number) => formatCurrency(cents, selectedCurrency, exchangeRates, true)
-  const hasContributors = contributors.length > 0
+  const [showContributors, setShowContributors] = useState(false);
+  const formatPrice = (jpy: number) => formatCurrency(jpy, selectedCurrency, exchangeRates, true);
+  const hasContributors = contributors.length > 0;
 
-  const isInverted = variant === 'inverted'
-  
+  const isInverted = variant === "inverted";
+
   return (
     <div className="space-y-2">
       {/* Amount and contributors button on same line */}
       <div className="flex items-center justify-between gap-3">
-        <p className={cn(
-          "text-xs font-medium whitespace-nowrap",
-          isInverted ? "text-white" : "text-dark/50"
-        )}>
-          {goalAmount 
+        <p
+          className={cn(
+            "text-xs font-medium whitespace-nowrap",
+            isInverted ? "text-white" : "text-dark/50"
+          )}
+        >
+          {goalAmount
             ? `${formatPrice(currentAmount)} / ${formatPrice(goalAmount)}`
-            : formatPrice(currentAmount)
-          }
+            : formatPrice(currentAmount)}
         </p>
-        
+
         {/* Contributors toggle - disabled if no contributors */}
         <button
           onClick={(e) => {
-            e.stopPropagation()
+            e.stopPropagation();
             if (hasContributors) {
-              setShowContributors(!showContributors)
+              setShowContributors(!showContributors);
             }
           }}
           disabled={!hasContributors}
           className={cn(
-            "flex items-center gap-1 text-xs transition-colors whitespace-nowrap",
+            "flex items-center gap-1 text-xs whitespace-nowrap transition-colors",
             hasContributors
-              ? isInverted 
-                ? "text-white/80 hover:text-white cursor-pointer"
+              ? isInverted
+                ? "cursor-pointer text-white/80 hover:text-white"
                 : "text-dark/60 hover:text-dark cursor-pointer"
               : isInverted
-                ? "text-white/30 cursor-not-allowed"
+                ? "cursor-not-allowed text-white/30"
                 : "text-dark/30 cursor-not-allowed"
           )}
         >
@@ -70,11 +71,13 @@ export function ContributorsProgress({
       </div>
 
       {/* Progress bar below */}
-      <div className={cn(
-        "relative h-1 rounded-full overflow-hidden",
-        isInverted ? "bg-white/30" : "bg-dark/10"
-      )}>
-        <div 
+      <div
+        className={cn(
+          "relative h-1 overflow-hidden rounded-full",
+          isInverted ? "bg-white/30" : "bg-dark/10"
+        )}
+      >
+        <div
           className={cn(
             "h-full rounded-full transition-all duration-500",
             isInverted ? "bg-white" : "bg-accent-red"
@@ -84,30 +87,26 @@ export function ContributorsProgress({
       </div>
 
       {/* Contributors list - Animated show/hide */}
-      <div 
+      <div
         className={cn(
           "overflow-hidden transition-all duration-300 ease-in-out",
           showContributors && hasContributors ? "max-h-[500px] opacity-100" : "max-h-0 opacity-0"
         )}
       >
         {hasContributors && (
-          <div className={cn(
-            "mt-3 pt-3 border-t",
-            isInverted ? "border-white/20" : "border-dark/10"
-          )}>
+          <div
+            className={cn("mt-3 border-t pt-3", isInverted ? "border-white/20" : "border-dark/10")}
+          >
             <div className="space-y-2">
               {contributors.map((contributor, index) => (
-                <div 
-                  key={contributor.id || index}
+                <div
+                  key={contributor.id ?? index}
                   className="flex items-center justify-between text-xs"
                 >
                   <span className={isInverted ? "text-white/80" : "text-dark/60"}>
-                    {contributor.name || 'Anonyme'}
+                    {contributor.name ?? "Anonyme"}
                   </span>
-                  <span className={cn(
-                    "font-medium",
-                    isInverted ? "text-white" : "text-dark"
-                  )}>
+                  <span className={cn("font-medium", isInverted ? "text-white" : "text-dark")}>
                     {formatPrice(contributor.amount)}
                   </span>
                 </div>
@@ -117,5 +116,5 @@ export function ContributorsProgress({
         )}
       </div>
     </div>
-  )
+  );
 }

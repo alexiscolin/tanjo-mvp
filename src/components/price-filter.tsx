@@ -1,53 +1,50 @@
-'use client'
+"use client";
 
-import { Button } from '@/components/ui/button'
-import { type Currency, type ExchangeRates, convertFromJpy } from '@/lib/currency'
-import { ArrowUpDown, ArrowUp, ArrowDown, type LucideIcon } from 'lucide-react'
+import { ArrowUpDown, ArrowUp, ArrowDown, type LucideIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { type Currency, type ExchangeRates, convertFromJpy } from "@/lib/currency";
 
-export type PriceSort = 'none' | 'asc' | 'desc'
+export type PriceSort = "none" | "asc" | "desc";
 
 interface PriceFilterProps {
-  sortOrder: PriceSort
-  onSortChange: (sort: PriceSort) => void
+  sortOrder: PriceSort;
+  onSortChange: (sort: PriceSort) => void;
 }
 
 const sortConfig: Record<PriceSort, { icon: LucideIcon; label: string; ariaLabel: string }> = {
-  none: { icon: ArrowUpDown, label: 'Prix', ariaLabel: 'Trier par prix' },
-  asc: { icon: ArrowUp, label: 'Prix ↑', ariaLabel: 'Du moins cher au plus cher' },
-  desc: { icon: ArrowDown, label: 'Prix ↓', ariaLabel: 'Du plus cher au moins cher' },
-}
+  none: { icon: ArrowUpDown, label: "Prix", ariaLabel: "Trier par prix" },
+  asc: { icon: ArrowUp, label: "Prix ↑", ariaLabel: "Du moins cher au plus cher" },
+  desc: { icon: ArrowDown, label: "Prix ↓", ariaLabel: "Du plus cher au moins cher" },
+};
 
 const sortCycle: Record<PriceSort, PriceSort> = {
-  none: 'asc',
-  asc: 'desc',
-  desc: 'none',
-}
+  none: "asc",
+  asc: "desc",
+  desc: "none",
+};
 
-export function PriceFilter({
-  sortOrder,
-  onSortChange,
-}: PriceFilterProps) {
+export function PriceFilter({ sortOrder, onSortChange }: PriceFilterProps) {
   const handleSortClick = () => {
-    onSortChange(sortCycle[sortOrder])
-  }
+    onSortChange(sortCycle[sortOrder]);
+  };
 
-  const config = sortConfig[sortOrder]
-  const Icon = config.icon
+  const config = sortConfig[sortOrder];
+  const Icon = config.icon;
 
   return (
     <Button
-      variant={sortOrder === 'none' ? 'outline' : 'default'}
+      variant={sortOrder === "none" ? "outline" : "default"}
       size="sm"
       onClick={handleSortClick}
       className={`flex items-center gap-1.5 ${
-        sortOrder !== 'none' ? 'bg-accent-red hover:bg-accent-red/90' : ''
+        sortOrder !== "none" ? "bg-accent-red hover:bg-accent-red/90" : ""
       }`}
       aria-label={config.ariaLabel}
     >
       <Icon className="h-4 w-4" />
       <span className="hidden sm:inline">{config.label}</span>
     </Button>
-  )
+  );
 }
 
 /**
@@ -59,15 +56,14 @@ export function sortGiftsByPrice<T extends { price: number }>(
   currency: Currency,
   exchangeRates: ExchangeRates
 ): T[] {
-  if (sortOrder === 'none') return gifts
+  if (sortOrder === "none") return gifts;
 
   const getSortPrice = (price: number) =>
-    currency === 'JPY'
-      ? price
-      : convertFromJpy(price, currency, exchangeRates, 'toCents')
+    currency === "JPY" ? price : convertFromJpy(price, currency, exchangeRates, "toCents");
 
   return [...gifts].sort((a, b) => {
-    const diff = getSortPrice(a.price) - getSortPrice(b.price)
-    return sortOrder === 'asc' ? diff : -diff
-  })
+    const diff = getSortPrice(a.price) - getSortPrice(b.price);
+
+    return sortOrder === "asc" ? diff : -diff;
+  });
 }

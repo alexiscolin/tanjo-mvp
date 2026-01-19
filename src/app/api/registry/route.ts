@@ -1,11 +1,11 @@
-import { NextResponse } from 'next/server'
-import { getGifts, getListInfo } from '@/lib/google-sheets'
-import { getExchangeRates } from '@/lib/currency'
+import { NextResponse } from "next/server";
+import { getExchangeRates } from "@/lib/currency";
+import { getGifts, getListInfo } from "@/lib/google-sheets";
 
 /**
  * Registry API - Fetch all registry data in one call
  * GET /api/registry
- * 
+ *
  * Returns: gifts (with contributors already included), listInfo, exchangeRates
  * Single batch fetch - contributors are loaded by getGifts()
  */
@@ -15,30 +15,25 @@ export async function GET() {
       getGifts(),
       getListInfo(),
       getExchangeRates(),
-    ])
-    
+    ]);
+
     // Filter empty rows
-    const validGifts = gifts.filter(g => g.title && g.title.trim() !== '')
-    
-    const response = NextResponse.json({ 
-      gifts: validGifts, 
+    const validGifts = gifts.filter((g) => g.title && g.title.trim() !== "");
+
+    const response = NextResponse.json({
+      gifts: validGifts,
       listInfo,
       exchangeRates: rates,
-    })
-    
+    });
+
     // Short cache: 10 seconds to see changes quickly
     // Perfect for low-traffic sites with frequent admin updates
-    response.headers.set(
-      'Cache-Control', 
-      'public, s-maxage=10, stale-while-revalidate=30'
-    )
-    
-    return response
+    response.headers.set("Cache-Control", "public, s-maxage=10, stale-while-revalidate=30");
+
+    return response;
   } catch (error) {
-    console.error('Error fetching registry data:', error)
-    return NextResponse.json(
-      { error: 'Error fetching registry data' },
-      { status: 500 }
-    )
+    console.error("Error fetching registry data:", error);
+
+    return NextResponse.json({ error: "Error fetching registry data" }, { status: 500 });
   }
 }

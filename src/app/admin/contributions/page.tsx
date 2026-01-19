@@ -1,130 +1,134 @@
-'use client'
+"use client";
 
-import { useState, useEffect } from 'react'
-import { Card } from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Button } from '@/components/ui/button'
-import { ArrowLeft, Search, Users, TrendingUp, DollarSign } from 'lucide-react'
-import Link from 'next/link'
-import { formatJpy } from '@/lib/currency'
+import { useState, useEffect, useMemo } from "react";
+import Link from "next/link";
+import { ArrowLeft, Search, Users, TrendingUp, DollarSign, Loader2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Card } from "@/components/ui/card";
+import { Input } from "@/components/ui/input";
+import { formatJpy } from "@/lib/currency";
 
 interface EnrichedContribution {
-  id: string
-  giftId: string
-  giftTitle: string
-  name: string
-  email: string
-  amount: number
-  message: string
-  createdAt: string
+  id: string;
+  giftId: string;
+  giftTitle: string;
+  name: string;
+  email: string;
+  amount: number;
+  message: string;
+  createdAt: string;
 }
 
 export default function ContributionsPage() {
-  const [contributions, setContributions] = useState<EnrichedContribution[]>([])
-  const [filteredContributions, setFilteredContributions] = useState<EnrichedContribution[]>([])
-  const [searchTerm, setSearchTerm] = useState('')
-  const [selectedGift, setSelectedGift] = useState<string>('all')
-  const [isLoading, setIsLoading] = useState(true)
+  const [contributions, setContributions] = useState<EnrichedContribution[]>([]);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [selectedGift, setSelectedGift] = useState<string>("all");
+  const [isLoading, setIsLoading] = useState(true);
 
   useEffect(() => {
-    fetchData()
-  }, [])
+    const fetchData = async () => {
+      try {
+        const response = await fetch("/api/contributions");
+        const data = await response.json();
 
-  useEffect(() => {
-    filterContributions()
-  }, [searchTerm, selectedGift, contributions])
+        setContributions(data.contributions ?? []);
+      } catch (error) {
+        console.error("Error fetching contributions:", error);
+      } finally {
+        setIsLoading(false);
+      }
+    };
 
-  const fetchData = async () => {
-    try {
-      const response = await fetch('/api/contributions')
-      const data = await response.json()
-      
-      setContributions(data.contributions || [])
-      setFilteredContributions(data.contributions || [])
-    } catch (error) {
-      console.error('Error fetching data:', error)
-    } finally {
-      setIsLoading(false)
-    }
-  }
+    fetchData();
+  }, []);
 
-  const filterContributions = () => {
-    let filtered = [...contributions]
+  // Filtered contributions
+  const filteredContributions = useMemo(() => {
+    let filtered = [...contributions];
 
     // Filter by gift
-    if (selectedGift !== 'all') {
-      filtered = filtered.filter(c => c.giftId === selectedGift)
+    if (selectedGift !== "all") {
+      filtered = filtered.filter((c) => c.giftId === selectedGift);
     }
 
     // Filter by search term (name, email, or gift title)
     if (searchTerm) {
-      const search = searchTerm.toLowerCase()
-      filtered = filtered.filter(c => 
-        c.name.toLowerCase().includes(search) ||
-        c.email.toLowerCase().includes(search) ||
-        c.giftTitle.toLowerCase().includes(search)
-      )
+      const search = searchTerm.toLowerCase();
+
+      filtered = filtered.filter(
+        (c) =>
+          c.name.toLowerCase().includes(search) ||
+          c.email.toLowerCase().includes(search) ||
+          c.giftTitle.toLowerCase().includes(search)
+      );
     }
 
-    setFilteredContributions(filtered)
-  }
+    return filtered;
+  }, [searchTerm, selectedGift, contributions]);
 
   // Calculate statistics
-  const totalAmount = contributions.reduce((sum, c) => sum + c.amount, 0)
-  const uniqueContributors = new Set(contributions.map(c => c.email)).size
-  const averageAmount = contributions.length > 0 ? totalAmount / contributions.length : 0
+  const totalAmount = contributions.reduce((sum, c) => sum + c.amount, 0);
+  const uniqueContributors = new Set(contributions.map((c) => c.email)).size;
+  const averageAmount = contributions.length > 0 ? totalAmount / contributions.length : 0;
 
   // Get unique gifts for filter
-  const uniqueGifts = Array.from(new Set(contributions.map(c => ({ id: c.giftId, title: c.giftTitle }))))
-    .reduce((acc, gift) => {
-      if (!acc.find(g => g.id === gift.id)) {
-        acc.push(gift)
+  const uniqueGifts = Array.from(
+    new Set(contributions.map((c) => ({ id: c.giftId, title: c.giftTitle })))
+  ).reduce(
+    (acc, gift) => {
+      if (!acc.find((g) => g.id === gift.id)) {
+        acc.push(gift);
       }
-      return acc
-    }, [] as { id: string; title: string }[])
+
+      return acc;
+    },
+    [] as { id: string; title: string }[]
+  );
 
   if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
+      <div className="bg-background flex min-h-screen items-center justify-center">
         <div className="text-center">
-          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-accent-red mx-auto mb-4"></div>
+          <Loader2 className="text-accent-red mx-auto mb-4 h-8 w-8 animate-spin" />
           <p className="text-muted-foreground">Chargement des contributions...</p>
         </div>
       </div>
-    )
+    );
   }
 
   return (
-    <div className="min-h-screen bg-linear-to-br from-accent-red/10 via-white to-accent-red/5 py-8 px-4">
-      <div className="max-w-7xl mx-auto">
+    <div className="from-accent-red/10 to-accent-red/5 min-h-screen bg-linear-to-br via-white px-4 py-8">
+      <div className="mx-auto max-w-7xl">
         {/* Header */}
         <div className="mb-8">
           <Link href="/admin">
             <Button variant="ghost" size="sm" className="mb-4">
               <ArrowLeft className="mr-2 h-4 w-4" />
-              Retour à l'admin
+              Retour à l&apos;admin
             </Button>
           </Link>
-          <h1 className="text-3xl font-bold mb-2">Contributions</h1>
-          <p className="text-muted-foreground">Vue d'ensemble de toutes les contributions reçues</p>
+          <h1 className="mb-2 text-3xl font-bold">Contributions</h1>
+          <p className="text-muted-foreground">
+            Vue d&apos;ensemble de toutes les contributions reçues
+          </p>
         </div>
 
         {/* Statistics Cards */}
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-8">
+        <div className="mb-8 grid grid-cols-1 gap-4 md:grid-cols-3">
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Total collecté</p>
-                <p className="text-2xl font-bold text-accent-red">{formatJpy(totalAmount)}</p>
+                <p className="text-muted-foreground mb-1 text-sm">Total collecté</p>
+                <p className="text-accent-red text-2xl font-bold">{formatJpy(totalAmount)}</p>
               </div>
-              <DollarSign className="h-8 w-8 text-accent-red opacity-50" />
+              <DollarSign className="text-accent-red h-8 w-8 opacity-50" />
             </div>
           </Card>
 
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Contributeurs</p>
+                <p className="text-muted-foreground mb-1 text-sm">Contributeurs</p>
                 <p className="text-2xl font-bold text-blue-600">{uniqueContributors}</p>
               </div>
               <Users className="h-8 w-8 text-blue-500 opacity-50" />
@@ -134,7 +138,7 @@ export default function ContributionsPage() {
           <Card className="p-6">
             <div className="flex items-center justify-between">
               <div>
-                <p className="text-sm text-muted-foreground mb-1">Montant moyen</p>
+                <p className="text-muted-foreground mb-1 text-sm">Montant moyen</p>
                 <p className="text-2xl font-bold text-green-600">{formatJpy(averageAmount)}</p>
               </div>
               <TrendingUp className="h-8 w-8 text-green-500 opacity-50" />
@@ -143,10 +147,10 @@ export default function ContributionsPage() {
         </div>
 
         {/* Filters */}
-        <Card className="p-4 mb-6">
-          <div className="flex flex-col md:flex-row gap-4">
-            <div className="flex-1 relative">
-              <Search className="absolute left-3 top-1/2 transform -translate-y-1/2 h-4 w-4 text-muted-foreground" />
+        <Card className="mb-6 p-4">
+          <div className="flex flex-col gap-4 md:flex-row">
+            <div className="relative flex-1">
+              <Search className="text-muted-foreground absolute top-1/2 left-3 h-4 w-4 -translate-y-1/2 transform" />
               <Input
                 placeholder="Rechercher par nom, email ou cadeau..."
                 value={searchTerm}
@@ -157,11 +161,13 @@ export default function ContributionsPage() {
             <select
               value={selectedGift}
               onChange={(e) => setSelectedGift(e.target.value)}
-              className="px-3 py-2 border rounded-md bg-background"
+              className="bg-background rounded-md border px-3 py-2"
             >
               <option value="all">Tous les cadeaux</option>
-              {uniqueGifts.map(gift => (
-                <option key={gift.id} value={gift.id}>{gift.title}</option>
+              {uniqueGifts.map((gift) => (
+                <option key={gift.id} value={gift.id}>
+                  {gift.title}
+                </option>
               ))}
             </select>
           </div>
@@ -184,30 +190,30 @@ export default function ContributionsPage() {
               <tbody className="divide-y">
                 {filteredContributions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="px-4 py-8 text-center text-muted-foreground">
-                      {searchTerm || selectedGift !== 'all' 
-                        ? 'Aucune contribution trouvée avec ces filtres' 
-                        : 'Aucune contribution pour le moment'}
+                    <td colSpan={6} className="text-muted-foreground px-4 py-8 text-center">
+                      {searchTerm || selectedGift !== "all"
+                        ? "Aucune contribution trouvée avec ces filtres"
+                        : "Aucune contribution pour le moment"}
                     </td>
                   </tr>
                 ) : (
                   filteredContributions.map((contrib) => (
                     <tr key={contrib.id} className="hover:bg-muted/30 transition-colors">
                       <td className="px-4 py-3 text-sm">
-                        {new Date(contrib.createdAt).toLocaleDateString('fr-FR', {
-                          day: '2-digit',
-                          month: '2-digit',
-                          year: 'numeric',
+                        {new Date(contrib.createdAt).toLocaleDateString("fr-FR", {
+                          day: "2-digit",
+                          month: "2-digit",
+                          year: "numeric",
                         })}
                       </td>
                       <td className="px-4 py-3 text-sm font-medium">{contrib.name}</td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground">{contrib.email}</td>
+                      <td className="text-muted-foreground px-4 py-3 text-sm">{contrib.email}</td>
                       <td className="px-4 py-3 text-sm">{contrib.giftTitle}</td>
-                      <td className="px-4 py-3 text-sm font-semibold text-right text-accent-red">
+                      <td className="text-accent-red px-4 py-3 text-right text-sm font-semibold">
                         {formatJpy(contrib.amount)}
                       </td>
-                      <td className="px-4 py-3 text-sm text-muted-foreground max-w-xs truncate">
-                        {contrib.message || '-'}
+                      <td className="text-muted-foreground max-w-xs truncate px-4 py-3 text-sm">
+                        {contrib.message || "-"}
                       </td>
                     </tr>
                   ))
@@ -219,12 +225,12 @@ export default function ContributionsPage() {
 
         {/* Summary */}
         {filteredContributions.length > 0 && (
-          <div className="mt-4 text-sm text-muted-foreground text-right">
-            {filteredContributions.length} contribution{filteredContributions.length > 1 ? 's' : ''} 
-            {(searchTerm || selectedGift !== 'all') && ` (sur ${contributions.length} au total)`}
+          <div className="text-muted-foreground mt-4 text-right text-sm">
+            {filteredContributions.length} contribution{filteredContributions.length > 1 ? "s" : ""}
+            {(searchTerm || selectedGift !== "all") && ` (sur ${contributions.length} au total)`}
           </div>
         )}
       </div>
     </div>
-  )
+  );
 }

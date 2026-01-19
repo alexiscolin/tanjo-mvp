@@ -1,5 +1,5 @@
-import type { Metadata } from "next";
 import { Playfair_Display, DM_Sans, Hina_Mincho } from "next/font/google";
+import type { Metadata } from "next";
 import "./globals.css";
 
 const serif = Playfair_Display({
@@ -37,7 +37,9 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="fr">
-      <body className={`${serif.variable} ${sans.variable} ${japanese.variable} font-sans antialiased bg-surface`}>
+      <body
+        className={`${serif.variable} ${sans.variable} ${japanese.variable} bg-surface font-sans antialiased`}
+      >
         {children}
       </body>
     </html>

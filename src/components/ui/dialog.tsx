@@ -1,40 +1,43 @@
-'use client'
+"use client";
 
-import * as React from "react"
-import { XIcon } from "lucide-react"
-import { cn } from "@/lib/utils"
+import * as React from "react";
+import { XIcon } from "lucide-react";
+import { cn } from "@/lib/utils";
 
 interface DialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  children: React.ReactNode
+  isOpen: boolean;
+  onOpenChange: (isOpen: boolean) => void;
+  children: React.ReactNode;
 }
 
-function Dialog({ open, onOpenChange, children }: DialogProps) {
+function Dialog({ isOpen, onOpenChange, children }: DialogProps) {
   React.useEffect(() => {
-    if (open) {
-      document.body.style.overflow = 'hidden'
+    if (isOpen) {
+      document.body.style.overflow = "hidden";
     } else {
-      document.body.style.overflow = ''
+      document.body.style.overflow = "";
     }
+
     return () => {
-      document.body.style.overflow = ''
-    }
-  }, [open])
+      document.body.style.overflow = "";
+    };
+  }, [isOpen]);
 
   React.useEffect(() => {
     const handleEscape = (e: KeyboardEvent) => {
-      if (e.key === 'Escape' && open) {
-        onOpenChange(false)
+      if (e.key === "Escape" && isOpen) {
+        onOpenChange(false);
       }
-    }
-    document.addEventListener('keydown', handleEscape)
-    return () => document.removeEventListener('keydown', handleEscape)
-  }, [open, onOpenChange])
+    };
 
-  if (!open) return null
+    document.addEventListener("keydown", handleEscape);
 
-  return <>{children}</>
+    return () => document.removeEventListener("keydown", handleEscape);
+  }, [isOpen, onOpenChange]);
+
+  if (!isOpen) return null;
+
+  return <>{children}</>;
 }
 
 function DialogContent({
@@ -43,15 +46,15 @@ function DialogContent({
   onClose,
   ...props
 }: {
-  className?: string
-  children: React.ReactNode
-  onClose: () => void
+  className?: string;
+  children: React.ReactNode;
+  onClose: () => void;
 } & React.HTMLAttributes<HTMLDivElement>) {
   return (
     <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
       {/* Overlay - click here to close */}
-      <div 
-        className="fixed inset-0 bg-black/50 animate-in fade-in-0"
+      <div
+        className="animate-in fade-in-0 fixed inset-0 bg-black/50"
         aria-hidden="true"
         onClick={onClose}
       />
@@ -59,7 +62,7 @@ function DialogContent({
       <div
         {...props}
         className={cn(
-          "relative bg-background w-full max-w-lg rounded-xl border p-6 shadow-lg animate-in fade-in-0 zoom-in-95 z-10",
+          "bg-background animate-in fade-in-0 zoom-in-95 relative z-10 w-full max-w-lg rounded-xl border p-6 shadow-lg",
           className
         )}
         onClick={(e) => e.stopPropagation()}
@@ -67,23 +70,20 @@ function DialogContent({
         {children}
         <button
           onClick={onClose}
-          className="absolute top-4 right-4 rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:outline-none focus:ring-2 focus:ring-ring cursor-pointer"
+          className="focus:ring-ring absolute top-4 right-4 cursor-pointer rounded-sm opacity-70 transition-opacity hover:opacity-100 focus:ring-2 focus:outline-none"
         >
           <XIcon className="h-5 w-5" />
           <span className="sr-only">Fermer</span>
         </button>
       </div>
     </div>
-  )
+  );
 }
 
 function DialogHeader({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
   return (
-    <div
-      className={cn("flex flex-col gap-2 text-center sm:text-left", className)}
-      {...props}
-    />
-  )
+    <div className={cn("flex flex-col gap-2 text-center sm:text-left", className)} {...props} />
+  );
 }
 
 function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivElement>) {
@@ -92,32 +92,15 @@ function DialogFooter({ className, ...props }: React.HTMLAttributes<HTMLDivEleme
       className={cn("flex flex-col-reverse gap-2 sm:flex-row sm:justify-end", className)}
       {...props}
     />
-  )
+  );
 }
 
 function DialogTitle({ className, ...props }: React.HTMLAttributes<HTMLHeadingElement>) {
-  return (
-    <h2
-      className={cn("text-lg leading-none font-semibold", className)}
-      {...props}
-    />
-  )
+  return <h2 className={cn("text-lg leading-none font-semibold", className)} {...props} />;
 }
 
 function DialogDescription({ className, ...props }: React.HTMLAttributes<HTMLParagraphElement>) {
-  return (
-    <p
-      className={cn("text-muted-foreground text-sm", className)}
-      {...props}
-    />
-  )
+  return <p className={cn("text-muted-foreground text-sm", className)} {...props} />;
 }
 
-export {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-}
+export { Dialog, DialogContent, DialogDescription, DialogFooter, DialogHeader, DialogTitle };

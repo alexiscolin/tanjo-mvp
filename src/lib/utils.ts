@@ -1,5 +1,9 @@
-import { clsx, type ClassValue } from "clsx"
-import { twMerge } from "tailwind-merge"
+import { clsx, type ClassValue } from "clsx";
+import { twMerge } from "tailwind-merge";
+import type { Gift, GiftCategory } from "@/types";
+import { POOL_ID } from "./constants";
+
+// ==================== TAILWIND MERGE ====================
 
 /**
  * Merge Tailwind classes with clsx
@@ -7,8 +11,40 @@ import { twMerge } from "tailwind-merge"
  * @returns Merged class string
  */
 export function cn(...inputs: ClassValue[]) {
-  return twMerge(clsx(inputs))
+  return twMerge(clsx(inputs));
 }
+
+// ==================== GIFT FILTERING ====================
+
+export interface GiftFilterOptions {
+  category?: GiftCategory | "all";
+  showOccasionOnly?: boolean;
+  showAvailableOnly?: boolean;
+  shouldExcludePool?: boolean;
+}
+
+/**
+ * Filter gifts based on category, occasion, and availability
+ * @param gifts - Array of gifts to filter
+ * @param options - Filter options
+ * @returns Filtered array of gifts
+ */
+export function filterGifts(gifts: Gift[], options: GiftFilterOptions = {}): Gift[] {
+  const {
+    category = "all",
+    showOccasionOnly = false,
+    showAvailableOnly = false,
+    shouldExcludePool = true,
+  } = options;
+
+  return gifts
+    .filter((g) => !shouldExcludePool || g.id !== POOL_ID)
+    .filter((g) => category === "all" || g.category === category)
+    .filter((g) => !showOccasionOnly || g.isOccasion)
+    .filter((g) => !showAvailableOnly || !g.isReserved);
+}
+
+// ==================== VALIDATION ====================
 
 /**
  * Validate email format
@@ -16,9 +52,10 @@ export function cn(...inputs: ClassValue[]) {
  * @returns True if valid email format
  */
 export function isValidEmail(email: string): boolean {
-  if (!email || typeof email !== 'string') return false
-  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
-  return emailRegex.test(email.trim())
+  if (!email || typeof email !== "string") return false;
+  const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+  return emailRegex.test(email.trim());
 }
 
 /**
@@ -27,11 +64,12 @@ export function isValidEmail(email: string): boolean {
  * @returns Sanitized string (max 500 chars)
  */
 export function sanitizeString(input: string): string {
-  if (!input || typeof input !== 'string') return ''
+  if (!input || typeof input !== "string") return "";
+
   return input
-    .replace(/<[^>]*>/g, '')
+    .replace(/<[^>]*>/g, "")
     .trim()
-    .substring(0, 500)
+    .substring(0, 500);
 }
 
 /**
@@ -41,11 +79,13 @@ export function sanitizeString(input: string): string {
  * @throws Error if name is less than 2 characters
  */
 export function sanitizeName(name: string): string {
-  const sanitized = sanitizeString(name)
+  const sanitized = sanitizeString(name);
+
   if (sanitized.length < 2) {
-    throw new Error('Name must be at least 2 characters')
+    throw new Error("Name must be at least 2 characters");
   }
-  return sanitized
+
+  return sanitized;
 }
 
 /**
@@ -54,8 +94,10 @@ export function sanitizeName(name: string): string {
  * @returns True if valid price
  */
 export function isValidPrice(price: number): boolean {
-  return typeof price === 'number' && price > 0 && isFinite(price)
+  return typeof price === "number" && price > 0 && isFinite(price);
 }
+
+// ==================== PHONE NUMBER OBFUSCATION ====================
 
 /**
  * Deobfuscate phone number
@@ -64,17 +106,19 @@ export function isValidPrice(price: number): boolean {
  * @returns Original phone number
  */
 export function deobfuscatePhone(obfuscated: string): string {
-  if (!obfuscated) return ''
-  
+  if (!obfuscated) return "";
+
   try {
-    if (typeof Buffer !== 'undefined') {
-      const decoded = Buffer.from(obfuscated, 'base64').toString('utf-8')
-      return decoded.split('').reverse().join('')
+    if (typeof Buffer !== "undefined") {
+      const decoded = Buffer.from(obfuscated, "base64").toString("utf-8");
+
+      return decoded.split("").reverse().join("");
     }
-    const decoded = atob(obfuscated)
-    return decoded.split('').reverse().join('')
+    const decoded = atob(obfuscated);
+
+    return decoded.split("").reverse().join("");
   } catch {
-    return obfuscated
+    return obfuscated;
   }
 }
 
@@ -85,51 +129,53 @@ export function deobfuscatePhone(obfuscated: string): string {
  * @returns Base64 encoded reversed phone number
  */
 export function obfuscatePhone(phone: string): string {
-  if (!phone) return ''
-  
+  if (!phone) return "";
+
   try {
-    const reversed = phone.split('').reverse().join('')
-    
+    const reversed = phone.split("").reverse().join("");
+
     // For Node.js (server-side)
-    if (typeof Buffer !== 'undefined') {
-      return Buffer.from(reversed).toString('base64')
+    if (typeof Buffer !== "undefined") {
+      return Buffer.from(reversed).toString("base64");
     }
-    
+
     // For browser (client-side)
-    return btoa(reversed)
+    return btoa(reversed);
   } catch {
-    return phone
+    return phone;
   }
 }
+
+// ==================== CONTRIBUTION VALIDATION ====================
 
 /**
  * Contribution input from API request
  */
 export interface ContributionInput {
-  name: string
-  email: string
-  amount: number
-  message?: string
-  currency?: string
+  name: string;
+  email: string;
+  amount: number;
+  message?: string;
+  currency?: string;
 }
 
 /**
  * Validated and sanitized contribution
  */
 export interface ValidatedContribution {
-  name: string
-  email: string
-  amount: number
-  message: string
-  currency: string
+  name: string;
+  email: string;
+  amount: number;
+  message: string;
+  currency: string;
 }
 
 /**
  * Validation error response
  */
 export interface ValidationError {
-  error: string
-  status: 400
+  error: string;
+  status: 400;
 }
 
 /**
@@ -140,27 +186,27 @@ export interface ValidationError {
 export function validateContribution(
   input: Partial<ContributionInput>
 ): ValidatedContribution | ValidationError {
-  const { name, email, amount, message, currency } = input
+  const { name, email, amount, message, currency } = input;
 
   if (!name || !email || amount === undefined || amount === null) {
-    return { error: 'Missing required fields', status: 400 }
+    return { error: "Missing required fields", status: 400 };
   }
 
   if (!isValidEmail(email)) {
-    return { error: 'Invalid email format', status: 400 }
+    return { error: "Invalid email format", status: 400 };
   }
 
   if (!isValidPrice(amount) || amount < 100) {
-    return { error: 'Invalid or too small amount (minimum 100 JPY)', status: 400 }
+    return { error: "Invalid or too small amount (minimum 100 JPY)", status: 400 };
   }
 
   return {
     name: sanitizeName(name),
     email: email.trim().toLowerCase(),
     amount: Math.round(amount),
-    message: sanitizeString(message || ''),
-    currency: currency || 'JPY',
-  }
+    message: sanitizeString(message ?? ""),
+    currency: currency ?? "JPY",
+  };
 }
 
 /**
@@ -171,5 +217,5 @@ export function validateContribution(
 export function isValidationError(
   result: ValidatedContribution | ValidationError
 ): result is ValidationError {
-  return 'error' in result
+  return "error" in result;
 }

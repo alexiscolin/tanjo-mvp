@@ -1,21 +1,18 @@
-import { defineConfig, globalIgnores } from 'eslint/config'
-import nextVitals from 'eslint-config-next/core-web-vitals'
-import nextTs from 'eslint-config-next/typescript'
-import importPlugin from 'eslint-plugin-import'
-import reactHooks from 'eslint-plugin-react-hooks'
-import unusedImports from 'eslint-plugin-unused-imports'
-import tseslint from 'typescript-eslint'
+import { defineConfig, globalIgnores } from "eslint/config";
+import nextVitals from "eslint-config-next/core-web-vitals";
+import nextTs from "eslint-config-next/typescript";
+import prettierConfig from "eslint-config-prettier";
+import importPlugin from "eslint-plugin-import";
+import prettierPlugin from "eslint-plugin-prettier";
+import reactHooks from "eslint-plugin-react-hooks";
+import unusedImports from "eslint-plugin-unused-imports";
+import tseslint from "typescript-eslint";
 
 const eslintConfig = defineConfig([
   ...nextVitals,
   ...nextTs,
   // Override default ignores of eslint-config-next.
-  globalIgnores([
-    '.next/**',
-    'out/**',
-    'build/**',
-    'next-env.d.ts',
-  ]),
+  globalIgnores([".next/**", "out/**", "build/**", "next-env.d.ts"]),
   // Custom rules for code consistency
   {
     languageOptions: {
@@ -26,69 +23,78 @@ const eslintConfig = defineConfig([
       },
     },
     plugins: {
-      'import': importPlugin,
-      'unused-imports': unusedImports,
-      'react-hooks': reactHooks,
+      import: importPlugin,
+      "unused-imports": unusedImports,
+      "react-hooks": reactHooks,
+      prettier: prettierPlugin,
     },
     rules: {
+      // ==================== PRETTIER ====================
+      "prettier/prettier": "error",
+
       // ==================== QUOTES & SEMICOLONS ====================
-      'quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
-      'semi': ['error', 'never'],
-      'jsx-quotes': ['error', 'prefer-double'],
+      // Disabled in favor of Prettier
+      // 'quotes': ['error', 'single', { avoidEscape: true, allowTemplateLiterals: true }],
+      // 'semi': ['error', 'never'],
+      // 'jsx-quotes': ['error', 'prefer-double'],
 
       // ==================== SPACING & FORMATTING ====================
-      'indent': ['error', 2, { SwitchCase: 1 }],
-      'no-trailing-spaces': 'error',
-      'eol-last': ['error', 'always'],
-      'object-curly-spacing': ['error', 'always'],
-      'array-bracket-spacing': ['error', 'never'],
-      'comma-dangle': ['error', 'always-multiline'],
+      // Disabled in favor of Prettier
+      // 'indent': ['error', 2, { SwitchCase: 1 }],
+      // 'no-trailing-spaces': 'error',
+      // 'eol-last': ['error', 'always'],
+      // 'object-curly-spacing': ['error', 'always'],
+      // 'array-bracket-spacing': ['error', 'never'],
+      // 'comma-dangle': ['error', 'always-multiline'],
 
       // ==================== CODE QUALITY ====================
-      'prefer-const': 'error',
-      'arrow-parens': ['error', 'as-needed'],
-      '@typescript-eslint/no-unused-vars': ['warn', { argsIgnorePattern: '^_', varsIgnorePattern: '^_' }],
+      "prefer-const": "error",
+      // 'arrow-parens': ['error', 'as-needed'], // Disabled in favor of Prettier
+      "@typescript-eslint/no-unused-vars": [
+        "warn",
+        { argsIgnorePattern: "^_", varsIgnorePattern: "^_" },
+      ],
 
       // ==================== IMPORTS ====================
       // Remove unused imports automatically
-      'unused-imports/no-unused-imports': 'error',
-      'unused-imports/no-unused-vars': [
-        'warn',
-        { vars: 'all', varsIgnorePattern: '^_', args: 'after-used', argsIgnorePattern: '^_' },
+      "unused-imports/no-unused-imports": "error",
+      "unused-imports/no-unused-vars": [
+        "warn",
+        { vars: "all", varsIgnorePattern: "^_", args: "after-used", argsIgnorePattern: "^_" },
       ],
 
       // Order imports
-      'import/order': [
-        'error',
+      "import/order": [
+        "error",
         {
-          'groups': [
-            'builtin',   // Node.js built-in modules
-            'external',  // npm packages
-            'internal',  // Aliased modules (@/)
-            ['parent', 'sibling', 'index'], // Relative imports
-            'type',      // Type imports
+          groups: [
+            "builtin", // Node.js built-in modules
+            "external", // npm packages
+            "internal", // Aliased modules (@/)
+            ["parent", "sibling", "index"], // Relative imports
+            "type", // Type imports
           ],
-          'pathGroups': [
+          pathGroups: [
             {
-              pattern: 'react',
-              group: 'external',
-              position: 'before',
+              pattern: "react",
+              group: "external",
+              position: "before",
             },
             {
-              pattern: 'next/**',
-              group: 'external',
-              position: 'before',
+              pattern: "next/**",
+              group: "external",
+              position: "before",
             },
             {
-              pattern: '@/**',
-              group: 'internal',
-              position: 'after',
+              pattern: "@/**",
+              group: "internal",
+              position: "after",
             },
           ],
-          'pathGroupsExcludedImportTypes': ['react', 'next'],
-          'newlines-between': 'never', // No blank lines between import groups
-          'alphabetize': {
-            order: 'asc',
+          pathGroupsExcludedImportTypes: ["react", "next"],
+          "newlines-between": "never", // No blank lines between import groups
+          alphabetize: {
+            order: "asc",
             caseInsensitive: true,
           },
         },
@@ -96,130 +102,148 @@ const eslintConfig = defineConfig([
 
       // ==================== BLANK LINES ====================
       // Enforce blank lines between certain statements
-      'padding-line-between-statements': [
-        'error',
+      "padding-line-between-statements": [
+        "error",
         // Blank line after imports
-        { blankLine: 'always', prev: 'import', next: '*' },
-        { blankLine: 'any', prev: 'import', next: 'import' },
+        { blankLine: "always", prev: "import", next: "*" },
+        { blankLine: "any", prev: "import", next: "import" },
         // Blank line before return
-        { blankLine: 'always', prev: '*', next: 'return' },
+        { blankLine: "always", prev: "*", next: "return" },
         // Blank line after variable declarations
-        { blankLine: 'always', prev: ['const', 'let', 'var'], next: '*' },
-        { blankLine: 'any', prev: ['const', 'let', 'var'], next: ['const', 'let', 'var'] },
+        { blankLine: "always", prev: ["const", "let", "var"], next: "*" },
+        { blankLine: "any", prev: ["const", "let", "var"], next: ["const", "let", "var"] },
         // Blank line before function declarations
-        { blankLine: 'always', prev: '*', next: 'function' },
+        { blankLine: "always", prev: "*", next: "function" },
         // Blank line before export
-        { blankLine: 'always', prev: '*', next: 'export' },
-        { blankLine: 'any', prev: 'export', next: 'export' },
+        { blankLine: "always", prev: "*", next: "export" },
+        { blankLine: "any", prev: "export", next: "export" },
       ],
 
       // ==================== REACT HOOKS ====================
-      'react-hooks/rules-of-hooks': 'error', // Enforce hooks rules
-      'react-hooks/exhaustive-deps': 'warn', // Check effect dependencies
+      "react-hooks/rules-of-hooks": "error", // Enforce hooks rules
+      "react-hooks/exhaustive-deps": "warn", // Check effect dependencies
 
       // ==================== COMPLEXITY & CODE QUALITY ====================
+      // TODO: Re-enable these rules after MVP for better code quality
       // Limit function complexity
-      'complexity': ['warn', 15],
+      complexity: "off", // ["warn", 15],
       // Limit max depth of nested blocks
-      'max-depth': ['warn', 4],
+      "max-depth": ["warn", 4],
       // Limit max nested callbacks
-      'max-nested-callbacks': ['warn', 3],
+      "max-nested-callbacks": ["warn", 3],
       // Limit max parameters in function
-      'max-params': ['warn', 5],
+      "max-params": ["warn", 5],
       // Limit max lines per function
-      'max-lines-per-function': ['warn', { max: 150, skipBlankLines: true, skipComments: true }],
+      "max-lines-per-function": "off", // ["warn", { max: 150, skipBlankLines: true, skipComments: true }],
       // Limit max lines per file
-      'max-lines': ['warn', { max: 600, skipBlankLines: true, skipComments: true }],
+      "max-lines": ["warn", { max: 600, skipBlankLines: true, skipComments: true }],
 
       // ==================== BEST PRACTICES ====================
       // No console.log in production
-      'no-console': ['warn', { allow: ['warn', 'error'] }],
+      "no-console": ["warn", { allow: ["warn", "error"] }],
       // Require default case in switch
-      'default-case': 'warn',
+      "default-case": "warn",
       // Disallow empty functions
-      'no-empty-function': 'warn',
+      "no-empty-function": "warn",
       // No duplicate conditions
-      'no-dupe-else-if': 'error',
+      "no-dupe-else-if": "error",
       // No unreachable code
-      'no-unreachable': 'error',
+      "no-unreachable": "error",
       // Require await in async functions
-      'require-await': 'warn',
+      "require-await": "warn",
       // No async function without await
-      '@typescript-eslint/require-await': 'off', // Disabled because it conflicts with Next.js patterns
+      "@typescript-eslint/require-await": "off", // Disabled because it conflicts with Next.js patterns
       // Prefer template literals
-      'prefer-template': 'warn',
+      "prefer-template": "warn",
       // No useless concat
-      'no-useless-concat': 'warn',
+      "no-useless-concat": "warn",
 
       // ==================== REACT SPECIFIC ====================
       // Prevent missing React when using JSX
-      'react/react-in-jsx-scope': 'off', // Not needed in Next.js 13+
+      "react/react-in-jsx-scope": "off", // Not needed in Next.js 13+
       // Prevent missing key prop
-      'react/jsx-key': 'error',
+      "react/jsx-key": "error",
       // No array index as key
-      'react/no-array-index-key': 'warn',
+      "react/no-array-index-key": "warn",
       // Boolean prop naming
-      'react/boolean-prop-naming': ['warn', { rule: '^(is|has|should|can|will|did)[A-Z]([A-Za-z0-9]?)+' }],
+      "react/boolean-prop-naming": [
+        "warn",
+        { rule: "^(is|has|should|can|will|did)[A-Z]([A-Za-z0-9]?)+" },
+      ],
       // Self-closing components
-      'react/self-closing-comp': 'warn',
+      "react/self-closing-comp": "warn",
       // No unsafe target blank
-      'react/jsx-no-target-blank': 'error',
+      "react/jsx-no-target-blank": "error",
 
       // ==================== TYPESCRIPT SPECIFIC ====================
       // No explicit any (already warning from base config, make it consistent)
-      '@typescript-eslint/no-explicit-any': 'warn',
+      "@typescript-eslint/no-explicit-any": "warn",
       // Consistent type definitions
-      '@typescript-eslint/consistent-type-definitions': ['warn', 'interface'],
+      "@typescript-eslint/consistent-type-definitions": ["warn", "interface"],
       // Prefer nullish coalescing over logical OR
-      '@typescript-eslint/prefer-nullish-coalescing': 'warn',
+      "@typescript-eslint/prefer-nullish-coalescing": "warn",
       // Prefer optional chain over && checks
-      '@typescript-eslint/prefer-optional-chain': 'warn',
+      "@typescript-eslint/prefer-optional-chain": "warn",
       // Consistent type imports
-      '@typescript-eslint/consistent-type-imports': ['warn', { prefer: 'type-imports' }],
+      "@typescript-eslint/consistent-type-imports": ["warn", { prefer: "type-imports" }],
       // No unnecessary type assertions
-      '@typescript-eslint/no-unnecessary-type-assertion': 'warn',
+      "@typescript-eslint/no-unnecessary-type-assertion": "warn",
       // Prefer as const over literal types
-      '@typescript-eslint/prefer-as-const': 'warn',
+      "@typescript-eslint/prefer-as-const": "warn",
 
       // ==================== NAMING CONVENTIONS ====================
-      '@typescript-eslint/naming-convention': [
-        'warn',
+      "@typescript-eslint/naming-convention": [
+        "warn",
         // Boolean variables should start with is, has, should, etc.
         {
-          selector: 'variable',
-          types: ['boolean'],
-          format: ['PascalCase', 'camelCase'],
-          prefix: ['is', 'has', 'should', 'can', 'will', 'did', 'show', 'hide', 'enable', 'disable'],
+          selector: "variable",
+          types: ["boolean"],
+          format: ["PascalCase", "camelCase"],
+          prefix: [
+            "is",
+            "has",
+            "should",
+            "can",
+            "will",
+            "did",
+            "show",
+            "hide",
+            "enable",
+            "disable",
+          ],
         },
         // TypeScript interfaces should be PascalCase
         {
-          selector: 'interface',
-          format: ['PascalCase'],
+          selector: "interface",
+          format: ["PascalCase"],
         },
         // Type aliases should be PascalCase
         {
-          selector: 'typeAlias',
-          format: ['PascalCase'],
+          selector: "typeAlias",
+          format: ["PascalCase"],
         },
         // Enums should be PascalCase
         {
-          selector: 'enum',
-          format: ['PascalCase'],
+          selector: "enum",
+          format: ["PascalCase"],
         },
       ],
 
       // ==================== COMMENTS & DOCUMENTATION ====================
       // Require JSDoc for exported functions (warning only)
-      'require-jsdoc': 'off', // Too strict for now
+      "require-jsdoc": "off", // Too strict for now
       // Warn about TODO/FIXME comments
-      'no-warning-comments': ['warn', { terms: ['TODO', 'FIXME', 'XXX', 'HACK'], location: 'start' }],
+      "no-warning-comments": [
+        "warn",
+        { terms: ["TODO", "FIXME", "XXX", "HACK"], location: "start" },
+      ],
     },
   },
   // Disable type-aware rules for config files not in TypeScript project
-  // These files (*.config.mjs, *.config.js) are not included in tsconfig.json
+  // These files are not included in tsconfig.json
   // so they don't have TypeScript type information available for linting
   {
-    files: ['*.config.mjs', '*.config.js'],
+    files: ["*.config.mjs", "*.config.js"],
     languageOptions: {
       parser: tseslint.parser,
       parserOptions: {
@@ -228,12 +252,14 @@ const eslintConfig = defineConfig([
     },
     rules: {
       // Disable rules that require TypeScript type information
-      '@typescript-eslint/naming-convention': 'off',
-      '@typescript-eslint/prefer-nullish-coalescing': 'off',
-      '@typescript-eslint/prefer-optional-chain': 'off',
-      '@typescript-eslint/no-unnecessary-type-assertion': 'off',
+      "@typescript-eslint/naming-convention": "off",
+      "@typescript-eslint/prefer-nullish-coalescing": "off",
+      "@typescript-eslint/prefer-optional-chain": "off",
+      "@typescript-eslint/no-unnecessary-type-assertion": "off",
     },
   },
-])
+  // Prettier config should be last to override any conflicting rules
+  prettierConfig,
+]);
 
-export default eslintConfig
+export default eslintConfig;
