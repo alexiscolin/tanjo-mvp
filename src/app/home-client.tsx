@@ -310,15 +310,15 @@ export function HomeClient() {
               </div>
               <div className="bg-dark/20 h-12 w-px" />
               <div>
-                <p className="text-accent-red text-3xl font-semibold">{stats.contributions}</p>
-                <p className="text-dark/60 mt-1 text-xs tracking-wider uppercase">Contributeurs</p>
-              </div>
-              <div className="bg-dark/20 h-12 w-px" />
-              <div>
                 <p className="text-dark/60 text-3xl font-semibold">
                   {stats.total - stats.reserved}
                 </p>
                 <p className="text-dark/60 mt-1 text-xs tracking-wider uppercase">Disponibles</p>
+              </div>
+              <div className="bg-dark/20 h-12 w-px" />
+              <div>
+                <p className="text-accent-red text-3xl font-semibold">{stats.contributions}</p>
+                <p className="text-dark/60 mt-1 text-xs tracking-wider uppercase">Contributeurs</p>
               </div>
             </div>
           </div>
