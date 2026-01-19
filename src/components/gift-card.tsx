@@ -31,19 +31,34 @@ export function GiftCard({
       ? Math.min((gift.potCurrentAmount / gift.price) * 100, 100)
       : 0;
 
+  // Check if pot is fully funded (>=99% to handle currency conversion rounding)
+  const isFullyFunded = gift.isPot && progressPercentage >= 99.5;
+
+  // Disable interaction if reserved OR fully funded
+  const isDisabled = gift.isReserved || isFullyFunded;
+
   // Get the icon component for the category
   const CategoryIcon = categoryIcons[gift.category] ?? Gift;
 
   const contributors = gift.contributors ?? [];
 
+  const handleClick = () => {
+    if (isDisabled) return;
+    if (gift.isPot) {
+      onContribute?.(gift);
+    } else {
+      onReserve?.(gift);
+    }
+  };
+
   return (
     <Card
       className={cn(
         "group overflow-hidden transition-all duration-300",
-        !gift.isReserved && "cursor-pointer hover:-translate-y-1",
-        gift.isReserved && "cursor-default"
+        !isDisabled && "cursor-pointer hover:-translate-y-1",
+        isDisabled && "cursor-not-allowed opacity-75"
       )}
-      onClick={() => !gift.isReserved && (gift.isPot ? onContribute?.(gift) : onReserve?.(gift))}
+      onClick={handleClick}
     >
       {/* Image */}
       <div
@@ -59,7 +74,7 @@ export function GiftCard({
             alt={gift.title}
             className={cn(
               "h-full w-full object-cover transition-transform duration-500",
-              !gift.isReserved && "group-hover:scale-105"
+              !isDisabled && "group-hover:scale-105"
             )}
           />
         ) : (
@@ -80,14 +95,14 @@ export function GiftCard({
         </div>
 
         {/* Occasion badge */}
-        {gift.isOccasion && !gift.isReserved && (
+        {gift.isOccasion && !isDisabled && (
           <div className="absolute top-2 right-2">
             <Badge className="bg-accent-gold border-0 px-2 py-1 text-xs text-white">Occasion</Badge>
           </div>
         )}
 
         {/* Action buttons on image */}
-        {!gift.isReserved && (
+        {!isDisabled && (
           <>
             {/* Reserve/Contribute button - bottom left */}
             <div className="absolute bottom-3 left-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
@@ -140,13 +155,18 @@ export function GiftCard({
           <span className="text-dark/60 font-bold">{formatPrice(gift.price)}</span>
         </p>
 
-        {/* Reserved badge - shown at bottom for reserved gifts */}
-        {gift.isReserved && (
+        {/* Reserved badge - shown at bottom for reserved/fully funded gifts */}
+        {isFullyFunded ? (
+          <Badge className="bg-accent-red/70 mb-3 text-xs text-white">
+            <Check className="mr-1 h-3 w-3" />
+            Objectif atteint
+          </Badge>
+        ) : gift.isReserved && !gift.isPot ? (
           <Badge className="bg-accent-red mb-3 text-xs text-white">
             <Check className="mr-1 h-3 w-3" />
-            {gift.isPot ? "Réservé" : `Réservé par ${gift.reservedBy}`}
+            Réservé par {gift.reservedBy}
           </Badge>
-        )}
+        ) : null}
 
         {/* Progress for pots - Always show for pot gifts */}
         {gift.isPot && (
