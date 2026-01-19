@@ -32,6 +32,7 @@ const description =
   "Camille verra bientôt le jour sous le soleil d'Okinawa. Découvrez son petit monde d'ici à votre rencontre !";
 
 export const metadata: Metadata = {
+  metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
   title,
   description,
   openGraph: {
