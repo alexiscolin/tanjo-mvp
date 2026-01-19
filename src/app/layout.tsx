@@ -28,8 +28,9 @@ const japanese = Hina_Mincho({
 });
 
 export const metadata: Metadata = {
-  title: "Notre Liste de Naissance",
-  description: "Découvrez notre liste de naissance et offrez le cadeau parfait pour notre bébé !",
+  title: "Nathalie x Camille x Alexis : La Liste",
+  description:
+    "Camille verra bientôt le jour sous le soleil d'Okinawa. Découvrez son petit monde d'ici à votre rencontre !",
   robots: {
     index: false,
     follow: false,

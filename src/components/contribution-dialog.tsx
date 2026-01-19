@@ -270,9 +270,7 @@ export function ContributionDialog({
               <div>
                 <DialogTitle>Merci {name} !</DialogTitle>
                 <DialogDescription>
-                  {isReservation
-                    ? "Votre réservation a été enregistrée."
-                    : "Votre contribution a été enregistrée."}
+                  Votre participation est maintenant enregistrée.
                 </DialogDescription>
               </div>
             </div>
@@ -281,8 +279,8 @@ export function ContributionDialog({
           {hasPaymentMethods ? (
             <div className="mt-4">
               <p className="text-muted-foreground mb-4 text-sm">
-                Pour finaliser {isReservation ? "votre réservation" : "votre contribution"},
-                effectuez le paiement ci-dessous :
+                Il ne vous reste qu&apos;à nous faire parvenir votre paiement. On se charge du
+                reste.
               </p>
               <PaymentInstructions
                 amount={submittedAmount}
@@ -303,7 +301,7 @@ export function ContributionDialog({
             </div>
           )}
 
-          <DialogFooter className="mt-4 gap-2 sm:gap-0">
+          <DialogFooter className="mt-4 gap-2">
             <Button
               type="button"
               variant="outline"
@@ -346,15 +344,15 @@ export function ContributionDialog({
               <HandHeart className="text-accent-red h-5 w-5" />
             )}
             <DialogTitle>
-              {isReservation ? "Réserver ce cadeau" : "Participer à la cagnotte"}
+              {isReservation ? "Offrir ce cadeau" : "Participer à ce cadeau"}
             </DialogTitle>
           </div>
           <DialogDescription>
             {isReservation
-              ? "Réservez ce cadeau en remplissant le formulaire ci-dessous."
+              ? "Et ne vous souciez pas du reste : on se chargera de l'achat."
               : gift.id === POOL_ID
                 ? "Participez au montant de votre choix à notre cagnotte libre."
-                : "Participez au montant de votre choix pour ce cadeau."}
+                : "Et ne vous souciez pas du reste : on se chargera de l'achat."}
           </DialogDescription>
         </DialogHeader>
 
@@ -496,7 +494,7 @@ export function ContributionDialog({
               id="message"
               value={message}
               onChange={(e) => setMessage(e.target.value)}
-              placeholder="Un petit mot doux..."
+              placeholder="message pour Camille"
               rows={3}
             />
           </div>
@@ -508,23 +506,28 @@ export function ContributionDialog({
           )}
 
           <DialogFooter>
-            <Button type="submit" disabled={isSubmitting} className="w-full cursor-pointer">
-              {isSubmitting ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Envoi en cours...
-                </>
-              ) : (
-                <>
-                  {isReservation ? (
-                    <Gift className="mr-2 h-4 w-4" />
-                  ) : (
-                    <HandHeart className="mr-2 h-4 w-4" />
-                  )}
-                  {isReservation ? "Réserver" : "Participer"}
-                </>
+            <div className="flex w-full flex-col items-center justify-center gap-2">
+              <Button type="submit" disabled={isSubmitting} className="w-full cursor-pointer">
+                {isSubmitting ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Envoi en cours...
+                  </>
+                ) : (
+                  <>
+                    {isReservation ? (
+                      <Gift className="mr-2 h-4 w-4" />
+                    ) : (
+                      <HandHeart className="mr-2 h-4 w-4" />
+                    )}
+                    Confirmer et payer
+                  </>
+                )}
+              </Button>
+              {gift.id !== POOL_ID && (
+                <span className="text-accent-foreground text-xs">On se chargera de l’achat.</span>
               )}
-            </Button>
+            </div>
           </DialogFooter>
         </form>
       </DialogContent>

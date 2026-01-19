@@ -157,55 +157,18 @@ export function PaymentInstructions({
         onCopy={copyToClipboard}
       />
 
-      {/* PayPal Section - Priority */}
-      {hasPayPal && (
-        <div className="space-y-3 rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
-          <div className="flex items-center gap-2">
-            <ExternalLink className="h-5 w-5 text-blue-600" />
-            <h4 className="font-semibold text-blue-900">Payer avec PayPal (Recommandé)</h4>
-          </div>
-
-          <a
-            href={`https://paypal.me/${paymentConfig.paypalMeUsername}/${amount}${currency}`}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="block"
-          >
-            <Button className="w-full bg-blue-600 hover:bg-blue-700">
-              <ExternalLink className="mr-2 h-4 w-4" />
-              Ouvrir PayPal.me ({formattedAmount})
-            </Button>
-          </a>
-
-          <p className="text-xs text-blue-700">
-            ⚠️ Note : Des frais peuvent s&apos;appliquer si vous payez par carte bancaire. Le
-            paiement par solde PayPal ou virement bancaire est gratuit.
-          </p>
-        </div>
-      )}
-
-      {/* Separator if multiple methods */}
-      {hasPayPal && hasWero && (
-        <div className="relative">
-          <div className="absolute inset-0 flex items-center">
-            <div className="w-full border-t" />
-          </div>
-          <div className="relative flex justify-center text-xs uppercase">
-            <span className="bg-surface text-muted-foreground px-2">ou (gratuit)</span>
-          </div>
-        </div>
-      )}
-
       {/* Wero Section with protection */}
       {hasWero && (
         <div className="space-y-3">
           <div className="flex items-center gap-2">
             <Smartphone className="h-5 w-5 text-emerald-500" />
-            <h4 className="font-semibold">Payer avec Wero (Gratuit)</h4>
+            <h4 className="font-semibold">Payer avec Wero (gratuit)</h4>
           </div>
 
           <div className="rounded-lg bg-gray-50 p-3">
-            <p className="text-muted-foreground mb-1 text-xs">Numéro de téléphone</p>
+            <p className="text-muted-foreground mb-1 text-xs">
+              Numéro de téléphone français de Nathalie
+            </p>
             <div className="flex items-center justify-between">
               <p className="font-mono font-medium">
                 {isPhoneRevealed ? actualPhone : "** ** ** ** **"}
@@ -249,6 +212,45 @@ export function PaymentInstructions({
               <li>Ajoutez &quot;{contributorName}&quot; en message</li>
             </ol>
           </div>
+        </div>
+      )}
+
+      {/* Separator if multiple methods */}
+      {hasPayPal && hasWero && (
+        <div className="relative">
+          <div className="absolute inset-0 flex items-center">
+            <div className="w-full border-t" />
+          </div>
+          <div className="relative flex justify-center text-xs uppercase">
+            <span className="bg-surface text-muted-foreground px-2">ou</span>
+          </div>
+        </div>
+      )}
+
+      {/* PayPal Section - Priority */}
+      {hasPayPal && (
+        <div className="space-y-3 rounded-lg border-2 border-blue-200 bg-blue-50 p-4">
+          <div className="flex items-center gap-2">
+            <ExternalLink className="h-5 w-5 text-blue-600" />
+            <h4 className="font-semibold text-blue-900">Payer avec votre PayPal</h4>
+          </div>
+
+          <a
+            href={`https://paypal.me/${paymentConfig.paypalMeUsername}/${amount}${currency}`}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="block"
+          >
+            <Button className="w-full bg-blue-600 hover:bg-blue-700">
+              <ExternalLink className="mr-2 h-4 w-4" />
+              Ouvrir PayPal.me ({formattedAmount})
+            </Button>
+          </a>
+
+          <p className="text-xs text-blue-700">
+            ⚠️ Note : Des frais peuvent s&apos;appliquer si vous payez par carte bancaire. Le
+            paiement par solde PayPal ou virement bancaire est gratuit.
+          </p>
         </div>
       )}
     </div>

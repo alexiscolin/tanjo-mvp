@@ -29,7 +29,7 @@ export function CurrencySelector({ selectedCurrency, onCurrencyChange }: Currenc
           className={cn(
             "cursor-pointer rounded-full px-2 py-0.5 text-xs font-medium transition-all",
             selectedCurrency === currency
-              ? "bg-dark text-white"
+              ? "bg-accent-red text-white"
               : "text-dark/60 hover:text-dark hover:bg-surface/60"
           )}
           title={currencyLabels[currency]}

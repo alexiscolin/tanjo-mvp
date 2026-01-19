@@ -38,7 +38,7 @@ export function FreeContributionCard({
               {title}
             </h3>
             <p className="mb-4 line-clamp-2 text-sm text-white/80">
-              Contribuez librement au montant de votre choix pour soutenir notre projet
+              Pour ceux qui préfèrent les chiffres ronds
             </p>
 
             {/* Contributors progress - Always show */}

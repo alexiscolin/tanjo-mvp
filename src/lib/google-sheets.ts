@@ -313,25 +313,37 @@ export async function addContribution(
 
 export async function deleteContribution(id: string): Promise<Contribution> {
   const sheets = await getSheets();
-  const contributions = await getContributions();
-  const contribution = contributions.find((c) => c.id === id);
 
-  if (!contribution) throw new Error("Contribution not found");
+  // Get all rows including empty ones to find the exact row index
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.CONTRIBUTIONS}!A2:H`,
+  });
 
-  const rowIndex = contributions.findIndex((c) => c.id === id);
+  const rows = response.data.values ?? [];
+  const rowIndex = rows.findIndex((row) => row[0] === id);
 
   if (rowIndex === -1) throw new Error("Contribution not found");
 
-  // Clear the row
-  const row = rowIndex + 2; // +2 because of header + index 0
+  // Parse the contribution before deleting it to return it
+  const rowData = rows[rowIndex];
+  const contribution: Contribution = {
+    id: rowData[0] ?? "",
+    giftId: rowData[1] ?? "",
+    name: rowData[2] ?? "",
+    email: rowData[3] ?? "",
+    amount: parseInt(rowData[4]) || 0,
+    message: rowData[5] ?? undefined,
+    createdAt: rowData[6] ?? new Date().toISOString(),
+    cancelToken: rowData[7] ?? undefined,
+  };
 
-  await sheets.spreadsheets.values.update({
+  const row = rowIndex + 2; // +2 because of header (line 1) + index 0
+
+  // Use clear instead of update with empty strings to truly empty the cells
+  await sheets.spreadsheets.values.clear({
     spreadsheetId: SPREADSHEET_ID,
     range: `${SHEETS.CONTRIBUTIONS}!A${row}:H${row}`,
-    valueInputOption: "USER_ENTERED",
-    requestBody: {
-      values: [["", "", "", "", "", "", "", ""]],
-    },
   });
 
   // Update pot amount (subtract the contribution)

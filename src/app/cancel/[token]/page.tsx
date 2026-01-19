@@ -193,7 +193,7 @@ export default function CancelContributionPage({ params }: { params: Promise<{ t
                   id="feedback"
                   value={feedback}
                   onChange={(e) => setFeedback(e.target.value)}
-                  placeholder="Dites-nous pourquoi vous annulez..."
+                  placeholder="Si vous rencontrez un souci, on vous aidera."
                   rows={3}
                   className="mt-1.5"
                 />
@@ -230,7 +230,7 @@ export default function CancelContributionPage({ params }: { params: Promise<{ t
                 <Link href="/" className="w-full">
                   <Button variant="outline" className="w-full">
                     <ArrowLeft className="mr-2 h-4 w-4" />
-                    Non, garder ma participation
+                    Non, maintenir ma participation
                   </Button>
                 </Link>
               </div>

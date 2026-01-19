@@ -108,12 +108,12 @@ export function GiftCard({
             <div className="absolute bottom-3 left-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
               <button
                 className="bg-dark hover:bg-dark/90 flex cursor-pointer items-center gap-2 rounded-full px-4 py-3 text-white shadow-lg transition-colors"
-                aria-label={gift.isPot ? "Participer" : "Réserver"}
+                aria-label={gift.isPot ? "Participer" : "Confirmer et payer"}
               >
                 {gift.isPot ? (
                   <>
                     <HandHeart className="h-5 w-5" />
-                    <span className="text-sm font-medium">Cagnotter</span>
+                    <span className="text-sm font-medium">Participer</span>
                   </>
                 ) : (
                   <>
@@ -164,7 +164,7 @@ export function GiftCard({
         ) : gift.isReserved && !gift.isPot ? (
           <Badge className="bg-accent-red mb-3 text-xs text-white">
             <Check className="mr-1 h-3 w-3" />
-            Réservé par {gift.reservedBy}
+            Merci à {gift.reservedBy}
           </Badge>
         ) : null}
 

@@ -452,7 +452,10 @@ export default function AdminPage() {
                     </div>
                   )}
                   {gift.isPot && (
-                    <Badge className="absolute top-2 left-2 bg-amber-500">Cagnotte</Badge>
+                    <Badge className="bg-accent-red absolute top-2 left-2">Cagnotte</Badge>
+                  )}
+                  {gift.isOccasion && (
+                    <Badge className="bg-accent-gold absolute top-2 right-2">Occasion</Badge>
                   )}
                 </div>
                 <CardContent className="p-4">

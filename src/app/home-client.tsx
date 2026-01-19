@@ -293,7 +293,7 @@ export function HomeClient() {
                 <div className="flex flex-col items-center justify-center gap-4 text-center md:flex-row md:items-baseline-last md:text-left xl:gap-8">
                   <span className="font-japanese">ようこそ</span>
                   <span className="text-dark/70 block text-lg leading-tight tracking-tight md:mt-10 md:max-w-[18vw] lg:max-w-[18vw] lg:text-xl xl:max-w-84 xl:text-2xl">
-                    {listInfo?.subtitle ?? "Bienvenue sur notre liste de naissance"}
+                    {listInfo?.subtitle}
                   </span>
                 </div>
                 <span className="font-japanese mx-auto block text-center md:pl-52 xl:pl-96">
@@ -303,22 +303,28 @@ export function HomeClient() {
             </div>
 
             {/* Stats */}
-            <div className="mx-auto mb-10 flex w-full max-w-7xl items-center gap-12 px-4 md:px-6">
+            <div className="mx-auto mb-10 flex w-full max-w-7xl items-center gap-4 px-6 sm:gap-12">
               <div>
                 <p className="text-dark text-3xl font-semibold">{stats.total}</p>
-                <p className="text-dark/60 mt-1 text-xs tracking-wider uppercase">Cadeaux</p>
+                <p className="text-dark/60 mt-1 text-xs tracking-wider uppercase">
+                  Cadeau{stats.total > 1 && "x"}
+                </p>
               </div>
               <div className="bg-dark/20 h-12 w-px" />
               <div>
                 <p className="text-dark/60 text-3xl font-semibold">
                   {stats.total - stats.reserved}
                 </p>
-                <p className="text-dark/60 mt-1 text-xs tracking-wider uppercase">Disponibles</p>
+                <p className="text-dark/60 mt-1 text-xs tracking-wider uppercase">
+                  Disponible{stats.total - stats.reserved > 1 && "s"}
+                </p>
               </div>
               <div className="bg-dark/20 h-12 w-px" />
               <div>
                 <p className="text-accent-red text-3xl font-semibold">{stats.contributions}</p>
-                <p className="text-dark/60 mt-1 text-xs tracking-wider uppercase">Contributeurs</p>
+                <p className="text-dark/60 mt-1 text-xs tracking-wider uppercase">
+                  Contributeur{stats.contributions > 1 && "s"}
+                </p>
               </div>
             </div>
           </div>
