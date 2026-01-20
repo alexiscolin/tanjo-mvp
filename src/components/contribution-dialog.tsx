@@ -349,26 +349,45 @@ export function ContributionDialog({
           </div>
           <DialogDescription>
             {isReservation
-              ? "Et ne vous souciez pas du reste : on se chargera de l'achat."
+              ? "Ne vous souciez pas du reste: on se charger de l'achat."
               : gift.id === POOL_ID
                 ? "Participez au montant de votre choix à notre cagnotte libre."
-                : "Et ne vous souciez pas du reste : on se chargera de l'achat."}
+                : "Ne vous souciez pas du reste: on se charger de l'achat."}
           </DialogDescription>
         </DialogHeader>
 
         <div className="mb-2 rounded-lg pt-4">
-          <h4 className="mb-1 text-lg leading-tight font-bold">{gift.title}</h4>
-          {gift.imageUrl && (
-            <div className="relative mb-2 aspect-video w-full">
-              <Image
-                src={gift.imageUrl}
-                alt={gift.title}
-                fill
-                className="rounded-xl object-cover"
-                unoptimized
-              />
+          <div className="mb-2 flex items-center gap-4">
+            {gift.imageUrl && (
+              <div className="relative mb-2 aspect-square w-1/4">
+                <Image
+                  src={gift.imageUrl}
+                  alt={gift.title}
+                  fill
+                  className="rounded-xl object-cover"
+                  unoptimized
+                />
+              </div>
+            )}
+            <div>
+              <h4 className="mb-1 text-lg leading-tight font-bold">{gift.title}</h4>
+
+              {/* Show remaining amount for gifts with target, or total collected for pool */}
+              {gift.id === POOL_ID && gift.isPot ? (
+                <p className="text-accent-red text-lg font-semibold">
+                  {formatPrice(gift.potCurrentAmount ?? 0)} collectés
+                </p>
+              ) : (
+                gift.price > 0 && (
+                  <p className="text-accent-red text-lg font-semibold">
+                    {isReservation
+                      ? formatPrice(gift.price)
+                      : `${formatPrice(remainingAmount)} restants`}
+                  </p>
+                )
+              )}
             </div>
-          )}
+          </div>
           {!isReservation && gift.isPot && gift.price > 0 && (
             <div className="mb-2 space-y-1">
               <p className="text-muted-foreground text-sm">
@@ -385,20 +404,6 @@ export function ContributionDialog({
                 />
               </div>
             </div>
-          )}
-          {/* Show remaining amount for gifts with target, or total collected for pool */}
-          {gift.id === POOL_ID && gift.isPot ? (
-            <p className="text-accent-red text-lg font-semibold">
-              {formatPrice(gift.potCurrentAmount ?? 0)} collectés
-            </p>
-          ) : (
-            gift.price > 0 && (
-              <p className="text-accent-red text-lg font-semibold">
-                {isReservation
-                  ? formatPrice(gift.price)
-                  : `${formatPrice(remainingAmount)} restants`}
-              </p>
-            )
           )}
         </div>
 
