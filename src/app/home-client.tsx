@@ -293,7 +293,8 @@ export function HomeClient() {
                 <div className="flex flex-col items-center justify-center gap-4 text-center md:flex-row md:items-baseline-last md:text-left xl:gap-8">
                   <span className="font-japanese">ようこそ</span>
                   <span className="text-dark/70 block text-lg leading-tight tracking-tight md:mt-10 md:max-w-[18vw] lg:max-w-[18vw] lg:text-xl xl:max-w-84 xl:text-2xl">
-                    {listInfo?.subtitle}
+                    {listInfo?.subtitle ??
+                      "Nous attendons avec joie l'arrivée de notre petite Camille"}
                   </span>
                 </div>
                 <span className="font-japanese mx-auto block text-center md:pl-52 xl:pl-96">
