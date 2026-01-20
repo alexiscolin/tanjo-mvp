@@ -13,8 +13,8 @@ interface PriceFilterProps {
 
 const sortConfig: Record<PriceSort, { icon: LucideIcon; label: string; ariaLabel: string }> = {
   none: { icon: ArrowUpDown, label: "Prix", ariaLabel: "Trier par prix" },
-  asc: { icon: ArrowUp, label: "Prix ↑", ariaLabel: "Du moins cher au plus cher" },
-  desc: { icon: ArrowDown, label: "Prix ↓", ariaLabel: "Du plus cher au moins cher" },
+  asc: { icon: ArrowUp, label: "Prix", ariaLabel: "Du moins cher au plus cher" },
+  desc: { icon: ArrowDown, label: "Prix", ariaLabel: "Du plus cher au moins cher" },
 };
 
 const sortCycle: Record<PriceSort, PriceSort> = {
