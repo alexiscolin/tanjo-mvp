@@ -42,7 +42,7 @@ export function PriceFilter({ sortOrder, onSortChange }: PriceFilterProps) {
       aria-label={config.ariaLabel}
     >
       <Icon className="h-4 w-4" />
-      <span className="hidden sm:inline">{config.label}</span>
+      <span>{config.label}</span>
     </Button>
   );
 }
