@@ -209,7 +209,6 @@ export function PaymentInstructions({
               <li>Allez dans Wero → Envoyer</li>
               <li>Entrez le numéro ci-dessus</li>
               <li>Envoyez {formattedAmount}</li>
-              <li>Ajoutez &quot;{contributorName}&quot; en message</li>
             </ol>
           </div>
         </div>
@@ -246,11 +245,6 @@ export function PaymentInstructions({
               Ouvrir PayPal.me ({formattedAmount})
             </Button>
           </a>
-
-          <p className="text-xs text-blue-700">
-            ⚠️ Note : Des frais peuvent s&apos;appliquer si vous payez par carte bancaire. Le
-            paiement par solde PayPal ou virement bancaire est gratuit.
-          </p>
         </div>
       )}
     </div>
