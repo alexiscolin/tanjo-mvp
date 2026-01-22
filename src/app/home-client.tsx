@@ -428,7 +428,7 @@ export function HomeClient() {
 
       {/* Footer */}
       <footer className="text-muted-foreground py-8 text-center text-sm">
-        <p>Fait avec amour pour {listInfo?.babyName ?? "notre bébé"}</p>
+        <p>Fait avec amour pour {listInfo?.babyName ?? "Camille"}</p>
       </footer>
 
       {/* Scroll to top button (mobile only) */}
