@@ -1,11 +1,11 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
-import { getGifts, addGift, getListInfo } from "@/lib/google-sheets";
+import { getGiftsAndListInfo, addGift } from "@/lib/google-sheets";
 
 // GET /api/gifts - Fetch all gifts
 export async function GET() {
   try {
-    const [gifts, listInfo] = await Promise.all([getGifts(), getListInfo()]);
+    const { gifts, listInfo } = await getGiftsAndListInfo();
 
     // Filter empty rows
     const validGifts = gifts.filter((g) => g.title?.trim() !== "");

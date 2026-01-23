@@ -32,8 +32,18 @@ function checkConfig() {
   }
 }
 
+// Cache the sheets API client instance (NOT data cache - just reuses the API client)
+// Each API call still fetches fresh data from Google Sheets
+let cachedSheets: ReturnType<typeof google.sheets> | null = null;
+
 function getSheets() {
   checkConfig();
+
+  // Reuse cached API client instance if available (saves auth initialization time)
+  // This does NOT cache data - every values.get/batchGet still fetches fresh data
+  if (cachedSheets) {
+    return cachedSheets;
+  }
 
   const auth = new google.auth.GoogleAuth({
     credentials: {
@@ -43,30 +53,24 @@ function getSheets() {
     scopes: ["https://www.googleapis.com/auth/spreadsheets"],
   });
 
-  const sheets = google.sheets({ version: "v4", auth });
+  cachedSheets = google.sheets({ version: "v4", auth });
 
-  return sheets;
+  return cachedSheets;
 }
 
 // ==================== GIFTS ====================
 
 export async function getGifts(): Promise<Gift[]> {
-  const sheets = await getSheets();
+  const sheets = getSheets();
 
-  // Fetch both gifts and contributions in parallel
-  const [giftsResponse, contributionsResponse] = await Promise.all([
-    sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEETS.GIFTS}!A2:O`,
-    }),
-    sheets.spreadsheets.values.get({
-      spreadsheetId: SPREADSHEET_ID,
-      range: `${SHEETS.CONTRIBUTIONS}!A2:H`,
-    }),
-  ]);
+  // Use batchGet to fetch both ranges in a single API call (much faster!)
+  const batchResponse = await sheets.spreadsheets.values.batchGet({
+    spreadsheetId: SPREADSHEET_ID,
+    ranges: [`${SHEETS.GIFTS}!A2:O`, `${SHEETS.CONTRIBUTIONS}!A2:H`],
+  });
 
-  const giftsRows = giftsResponse.data.values ?? [];
-  const contributionsRows = contributionsResponse.data.values ?? [];
+  const giftsRows = batchResponse.data.valueRanges?.[0]?.values ?? [];
+  const contributionsRows = batchResponse.data.valueRanges?.[1]?.values ?? [];
 
   // Parse contributions and group by giftId
   const contributionsByGiftId: Record<string, Contribution[]> = {};
@@ -121,7 +125,7 @@ export async function getGifts(): Promise<Gift[]> {
 export async function addGift(
   gift: Omit<Gift, "id" | "isReserved" | "potCurrentAmount">
 ): Promise<void> {
-  const sheets = await getSheets();
+  const sheets = getSheets();
   const id = `gift_${Date.now()}`;
 
   await sheets.spreadsheets.values.append({
@@ -153,7 +157,7 @@ export async function addGift(
 }
 
 export async function updateGift(id: string, updates: Partial<Gift>): Promise<void> {
-  const sheets = await getSheets();
+  const sheets = getSheets();
   const gifts = await getGifts();
   const rowIndex = gifts.findIndex((g) => g.id === id);
 
@@ -191,7 +195,7 @@ export async function updateGift(id: string, updates: Partial<Gift>): Promise<vo
 }
 
 export async function deleteGift(id: string): Promise<void> {
-  const sheets = await getSheets();
+  const sheets = getSheets();
   const gifts = await getGifts();
   const rowIndex = gifts.findIndex((g) => g.id === id);
 
@@ -213,7 +217,7 @@ export async function deleteGift(id: string): Promise<void> {
 // ==================== CONTRIBUTIONS ====================
 
 export async function getContributions(giftId?: string): Promise<Contribution[]> {
-  const sheets = await getSheets();
+  const sheets = getSheets();
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -264,7 +268,7 @@ export interface AddContributionResult {
 export async function addContribution(
   contribution: Omit<Contribution, "id" | "createdAt" | "cancelToken">
 ): Promise<AddContributionResult> {
-  const sheets = await getSheets();
+  const sheets = getSheets();
   const id = `contrib_${Date.now()}`;
   const createdAt = new Date().toISOString();
   const cancelToken = generateCancelToken();
@@ -312,7 +316,7 @@ export async function addContribution(
 }
 
 export async function deleteContribution(id: string): Promise<Contribution> {
-  const sheets = await getSheets();
+  const sheets = getSheets();
 
   // Get all rows including empty ones to find the exact row index
   const response = await sheets.spreadsheets.values.get({
@@ -385,10 +389,92 @@ export async function deleteContributionByCancelToken(cancelToken: string): Prom
   return deleteContribution(contribution.id);
 }
 
+// ==================== OPTIMIZED BATCH FUNCTIONS ====================
+
+/**
+ * Optimized function to fetch both gifts and listInfo in a single API call
+ */
+export async function getGiftsAndListInfo(): Promise<{ gifts: Gift[]; listInfo: ListInfo }> {
+  const sheets = getSheets();
+
+  // Fetch all required data in a single batch API call (3 ranges at once)
+  const batchResponse = await sheets.spreadsheets.values.batchGet({
+    spreadsheetId: SPREADSHEET_ID,
+    ranges: [`${SHEETS.GIFTS}!A2:O`, `${SHEETS.CONTRIBUTIONS}!A2:H`, `${SHEETS.CONFIG}!B1:B8`],
+  });
+
+  const giftsRows = batchResponse.data.valueRanges?.[0]?.values ?? [];
+  const contributionsRows = batchResponse.data.valueRanges?.[1]?.values ?? [];
+  const configValues = batchResponse.data.valueRanges?.[2]?.values ?? [];
+
+  // Parse contributions and group by giftId
+  const contributionsByGiftId: Record<string, Contribution[]> = {};
+
+  contributionsRows
+    .filter((row) => row[0] && row[1]) // Filter empty rows
+    .forEach((row) => {
+      const contribution: Contribution = {
+        id: row[0],
+        giftId: row[1],
+        name: row[2] ?? "Anonyme",
+        email: row[3] ?? "",
+        amount: parseInt(row[4]) || 0,
+        message: row[5] ?? undefined,
+        createdAt: row[6] ?? new Date().toISOString(),
+        cancelToken: row[7] ?? undefined,
+      };
+
+      if (!contributionsByGiftId[contribution.giftId]) {
+        contributionsByGiftId[contribution.giftId] = [];
+      }
+      contributionsByGiftId[contribution.giftId].push(contribution);
+    });
+
+  // Parse gifts and attach contributors
+  const gifts = giftsRows.map((row, index) => {
+    const giftId = row[0] ?? String(index + 1);
+    const isPot = row[7]?.toLowerCase() === "oui";
+    const contributors = isPot ? (contributionsByGiftId[giftId] ?? []) : undefined;
+
+    return {
+      id: giftId,
+      title: row[1] ?? "",
+      description: row[2] ?? "",
+      price: parseInt(row[3]) || 0,
+      imageUrl: row[4] ?? "",
+      imageRatio: row[14] ? parseFloat(row[14]) : undefined,
+      category: row[5] ?? "autre",
+      externalUrl: row[6] ?? undefined,
+      isPot,
+      potCurrentAmount: parseInt(row[8]) || 0,
+      contributors, // Contributors for pot gifts (count = contributors.length)
+      isReserved: row[9]?.toLowerCase() === "oui",
+      reservedBy: row[10] ?? undefined,
+      reservedEmail: row[11] ?? undefined,
+      reservedAt: row[12] ?? undefined,
+      isOccasion: row[13]?.toLowerCase() === "oui",
+    };
+  });
+
+  // Parse listInfo
+  const listInfo: ListInfo = {
+    title: configValues[0]?.[0] ?? "Notre Liste de Naissance",
+    subtitle: configValues[1]?.[0] ?? "Bienvenue !",
+    description: configValues[2]?.[0] ?? "",
+    babyName: configValues[3]?.[0] ?? undefined,
+    expectedDate: configValues[4]?.[0] ?? undefined,
+    coverImageUrl: configValues[5]?.[0] ?? undefined,
+    enableFreeContribution: configValues[6]?.[0]?.toLowerCase() === "oui",
+    freeContributionTitle: configValues[7]?.[0] ?? "Contribution libre 💝",
+  };
+
+  return { gifts, listInfo };
+}
+
 // ==================== CONFIG ====================
 
 export async function getListInfo(): Promise<ListInfo> {
-  const sheets = await getSheets();
+  const sheets = getSheets();
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
@@ -410,7 +496,7 @@ export async function getListInfo(): Promise<ListInfo> {
 }
 
 export async function getAppConfig(): Promise<AppConfig> {
-  const sheets = await getSheets();
+  const sheets = getSheets();
 
   try {
     const response = await sheets.spreadsheets.values.get({
@@ -448,7 +534,7 @@ export async function getAppConfig(): Promise<AppConfig> {
 }
 
 export async function getPaymentConfig(): Promise<PaymentConfig> {
-  const sheets = await getSheets();
+  const sheets = getSheets();
 
   try {
     const response = await sheets.spreadsheets.values.get({
