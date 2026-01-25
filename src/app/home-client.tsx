@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useCallback, useRef, useMemo } from "react";
 import dynamic from "next/dynamic";
+import Link from "next/link";
 import { Gift as GiftIcon, Loader2, Sparkles as SparklesIcon } from "lucide-react";
 import { ContributionDialog } from "@/components/contribution-dialog";
 import { CurrencySelector } from "@/components/currency-selector";
@@ -241,7 +242,16 @@ export function HomeClient() {
       {/* Hero Section */}
       <section className="relative overflow-x-clip">
         <div className="fixed top-6 left-6 z-20">
-          <div className="text-dark text-2xl font-bold tracking-tight">CAMILLE</div>
+          <Link
+            href="/"
+            onClick={(e) => {
+              e.preventDefault();
+              window.scrollTo({ top: 0, behavior: "smooth" });
+            }}
+            className="text-dark cursor-pointer text-2xl font-bold tracking-tight"
+          >
+            CAMILLE
+          </Link>
         </div>
 
         {/* Currency selector */}
@@ -293,8 +303,7 @@ export function HomeClient() {
                 <div className="flex flex-col items-center justify-center gap-4 text-center md:flex-row md:items-baseline-last md:text-left xl:gap-8">
                   <span className="font-japanese">ようこそ</span>
                   <span className="text-dark/70 block text-lg leading-tight tracking-tight md:mt-10 md:max-w-[18vw] lg:max-w-[18vw] lg:text-xl xl:max-w-84 xl:text-2xl">
-                    {listInfo?.subtitle ??
-                      "Nous attendons avec joie l'arrivée de notre petite Camille"}
+                    {listInfo?.subtitle ?? "Camille verra bientôt le jour sous le soleil d'Okinawa"}
                   </span>
                 </div>
                 <span className="font-japanese mx-auto block text-center md:pl-52 xl:pl-96">
