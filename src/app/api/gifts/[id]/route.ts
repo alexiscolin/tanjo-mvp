@@ -1,15 +1,22 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { verifySession } from "@/lib/auth";
 import { updateGift, deleteGift } from "@/lib/google-sheets";
 
 // PATCH /api/gifts/[id] - Update a gift (partial update)
 export async function PATCH(request: NextRequest, { params }: { params: Promise<{ id: string }> }) {
   try {
-    const { id } = await params;
-    const { password, updates } = await request.json();
+    const isAuthenticated = verifySession(request);
 
-    if (password !== process.env.ADMIN_PASSWORD) {
+    if (!isAuthenticated) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
+    }
+
+    const { id } = await params;
+    const { updates } = await request.json();
+
+    if (!updates) {
+      return NextResponse.json({ error: "Updates required" }, { status: 400 });
     }
 
     await updateGift(id, updates);
@@ -28,12 +35,13 @@ export async function DELETE(
   { params }: { params: Promise<{ id: string }> }
 ) {
   try {
-    const { id } = await params;
-    const { password } = await request.json();
+    const isAuthenticated = verifySession(request);
 
-    if (password !== process.env.ADMIN_PASSWORD) {
+    if (!isAuthenticated) {
       return NextResponse.json({ error: "Non autorisé" }, { status: 401 });
     }
+
+    const { id } = await params;
 
     await deleteGift(id);
 

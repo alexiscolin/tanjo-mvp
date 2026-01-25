@@ -72,11 +72,13 @@ export default function AdminPage() {
     }
   }, []);
 
-  const fetchGifts = useCallback(async () => {
+  const fetchGifts = useCallback(async (forceRefresh = false) => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/gifts", {
+      const url = forceRefresh ? `/api/gifts?t=${Date.now()}` : "/api/gifts";
+      const response = await fetch(url, {
         credentials: "include",
+        cache: forceRefresh ? "no-store" : "default",
       });
       const data = await response.json();
 
@@ -190,7 +192,7 @@ export default function AdminPage() {
       if (response.ok) {
         resetForm();
         setShowAddDialog(false);
-        fetchGifts();
+        fetchGifts(true); // Force refresh to see new gift immediately
       } else {
         const data = await response.json();
 
@@ -232,11 +234,16 @@ export default function AdminPage() {
       if (response.ok) {
         resetForm();
         setEditingGift(null);
-        fetchGifts();
+        fetchGifts(true); // Force refresh to see updated gift immediately
       } else {
         const data = await response.json();
 
-        alert(data.error ?? "Error updating gift");
+        if (response.status === 401) {
+          alert("Session expirée. Veuillez vous reconnecter.");
+          setIsAuthenticated(false);
+        } else {
+          alert(data.error ?? "Erreur lors de la modification");
+        }
       }
     } catch (error) {
       console.error("Error updating gift:", error);
@@ -258,11 +265,16 @@ export default function AdminPage() {
       });
 
       if (response.ok) {
-        fetchGifts();
+        fetchGifts(true); // Force refresh to see updated list immediately
       } else {
         const data = await response.json();
 
-        alert(data.error ?? "Error deleting gift");
+        if (response.status === 401) {
+          alert("Session expirée. Veuillez vous reconnecter.");
+          setIsAuthenticated(false);
+        } else {
+          alert(data.error ?? "Erreur lors de la suppression");
+        }
       }
     } catch (error) {
       console.error("Error deleting gift:", error);

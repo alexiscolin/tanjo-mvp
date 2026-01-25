@@ -77,7 +77,7 @@ export function createSession(response: NextResponse): void {
   response.cookies.set(SESSION_COOKIE_NAME, cookieValue, {
     httpOnly: true,
     secure: process.env.NODE_ENV === "production", // HTTPS required in production
-    sameSite: "strict", // Stricter CSRF protection for admin
+    sameSite: "lax", // CSRF protection - lax allows same-site navigation
     maxAge: SESSION_DURATION_MS / 1000,
     path: "/",
   });
