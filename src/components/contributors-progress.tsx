@@ -40,7 +40,7 @@ export function ContributorsProgress({
             isInverted ? "text-white" : "text-dark/50"
           )}
         >
-          {goalAmount
+          {goalAmount && progressPercentage < 100
             ? `${formatPrice(currentAmount)} / ${formatPrice(goalAmount)}`
             : formatPrice(currentAmount)}
         </p>
