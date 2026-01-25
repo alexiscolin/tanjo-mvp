@@ -1,8 +1,16 @@
+import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { verifySession } from "@/lib/auth";
 import { POOL_ID } from "@/lib/constants";
 import { getContributions, getGifts } from "@/lib/google-sheets";
 
-export async function GET() {
+export async function GET(request: NextRequest) {
+  // Protect contributions endpoint - only authenticated admins can access
+  const isAuthenticated = verifySession(request);
+
+  if (!isAuthenticated) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
   try {
     const [contributions, gifts] = await Promise.all([getContributions(), getGifts()]);
 

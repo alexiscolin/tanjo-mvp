@@ -1,5 +1,6 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { verifySession } from "@/lib/auth";
 import { getGiftsAndListInfo, addGift } from "@/lib/google-sheets";
 
 // GET /api/gifts - Fetch all gifts
@@ -27,11 +28,17 @@ export async function GET() {
 // POST /api/gifts - Add a gift (password protected)
 export async function POST(request: NextRequest) {
   try {
-    const { password, gift } = await request.json();
+    // Verify session
+    const isAuthenticated = verifySession(request);
 
-    // Verify admin password
-    if (password !== process.env.ADMIN_PASSWORD) {
+    if (!isAuthenticated) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
+    const { gift } = await request.json();
+
+    if (!gift) {
+      return NextResponse.json({ error: "Gift data required" }, { status: 400 });
     }
 
     await addGift(gift);
