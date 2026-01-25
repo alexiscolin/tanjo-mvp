@@ -6,21 +6,22 @@
 [[plugins]]
   package = "@netlify/plugin-nextjs"
 
-# Variables d'environnement (à configurer dans Netlify UI)
+# Env Vars (to configure in Netlify UI)
 # GOOGLE_SHEETS_SPREADSHEET_ID
 # GOOGLE_SHEETS_CLIENT_EMAIL
 # GOOGLE_PRIVATE_KEY
 # ADMIN_PASSWORD
-# RESEND_API_KEY (optionnel)
-# NEXT_PUBLIC_EXCHANGE_RATE_API_URL (optionnel)
+# SESSION_SECRET (required - to generate with: openssl rand -hex 32)
+# RESEND_API_KEY (optionnal)
+# NEXT_PUBLIC_EXCHANGE_RATE_API_URL (optionnal)
 
 # Headers to optimize CDN
 [[headers]]
   for = "/api/exchange-rate"
   [headers.values]
     Cache-Control = "public, max-age=86400, s-maxage=86400"
-    # Cache 24h 
-    
+    # Cache 24h
+
 [[headers]]
   for = "/_next/static/*"
   [headers.values]

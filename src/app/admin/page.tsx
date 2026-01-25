@@ -38,7 +38,6 @@ import { categoryLabels, allCategories, categoryIcons } from "@/types";
 export default function AdminPage() {
   const [isAuthenticated, setIsAuthenticated] = useState(false);
   const [password, setPassword] = useState("");
-  const [storedPassword, setStoredPassword] = useState("");
   const [gifts, setGifts] = useState<Gift[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [editingGift, setEditingGift] = useState<Gift | null>(null);
@@ -76,7 +75,9 @@ export default function AdminPage() {
   const fetchGifts = useCallback(async () => {
     setIsLoading(true);
     try {
-      const response = await fetch("/api/gifts");
+      const response = await fetch("/api/gifts", {
+        credentials: "include",
+      });
       const data = await response.json();
 
       setGifts(data.gifts ?? []);
@@ -88,30 +89,65 @@ export default function AdminPage() {
   }, []);
 
   useEffect(() => {
-    // Check if already authenticated (session storage)
-    const saved = sessionStorage.getItem("adminPassword");
+    // Check if already authenticated via session cookie
+    const checkAuth = async () => {
+      try {
+        const response = await fetch("/api/admin/verify");
 
-    if (saved) {
-      setStoredPassword(saved);
-      setIsAuthenticated(true);
-      fetchGifts();
-      fetchConfig();
-    }
+        if (response.ok) {
+          setIsAuthenticated(true);
+          fetchGifts();
+          fetchConfig();
+        }
+      } catch (error) {
+        console.error("Error checking auth:", error);
+      }
+    };
+
+    checkAuth();
   }, [fetchGifts, fetchConfig]);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    sessionStorage.setItem("adminPassword", password);
-    setStoredPassword(password);
-    setIsAuthenticated(true);
-    fetchGifts();
-    fetchConfig();
+    setIsLoading(true);
+    try {
+      const response = await fetch("/api/admin/auth", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ password }),
+        credentials: "include",
+      });
+
+      if (response.ok) {
+        setIsAuthenticated(true);
+        setPassword(""); // Clear password from memory
+        fetchGifts();
+        fetchConfig();
+      } else {
+        const data = await response.json();
+        const errorMsg =
+          response.status === 429 ? data.error : (data.error ?? "Mot de passe incorrect");
+
+        alert(errorMsg);
+      }
+    } catch (error) {
+      console.error("Error verifying password:", error);
+      alert("Erreur lors de la vérification du mot de passe");
+    } finally {
+      setIsLoading(false);
+    }
   };
 
-  const handleLogout = () => {
-    sessionStorage.removeItem("adminPassword");
+  const handleLogout = async () => {
+    try {
+      await fetch("/api/admin/auth", {
+        method: "DELETE",
+        credentials: "include",
+      });
+    } catch (error) {
+      console.error("Error logging out:", error);
+    }
     setIsAuthenticated(false);
-    setStoredPassword("");
     setPassword("");
   };
 
@@ -135,8 +171,8 @@ export default function AdminPage() {
       const response = await fetch("/api/gifts", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Include session cookie
         body: JSON.stringify({
-          password: storedPassword,
           gift: {
             title: form.title,
             description: form.description,
@@ -177,8 +213,8 @@ export default function AdminPage() {
       const response = await fetch(`/api/gifts/${editingGift.id}`, {
         method: "PATCH",
         headers: { "Content-Type": "application/json" },
+        credentials: "include", // Include session cookie
         body: JSON.stringify({
-          password: storedPassword,
           updates: {
             title: form.title,
             description: form.description,
@@ -218,7 +254,7 @@ export default function AdminPage() {
       const response = await fetch(`/api/gifts/${gift.id}`, {
         method: "DELETE",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ password: storedPassword }),
+        credentials: "include", // Include session cookie
       });
 
       if (response.ok) {
@@ -285,8 +321,19 @@ export default function AdminPage() {
                   required
                 />
               </div>
-              <Button type="submit" className="bg-accent-red hover:bg-accent-red/90 w-full">
-                Connexion
+              <Button
+                type="submit"
+                className="bg-accent-red hover:bg-accent-red/90 w-full"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    Vérification...
+                  </>
+                ) : (
+                  "Connexion"
+                )}
               </Button>
             </form>
           </CardContent>

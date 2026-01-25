@@ -28,7 +28,17 @@ export default function ContributionsPage() {
   useEffect(() => {
     const fetchData = async () => {
       try {
-        const response = await fetch("/api/contributions");
+        const response = await fetch("/api/contributions", {
+          credentials: "include", // Include session cookie
+        });
+
+        if (response.status === 401) {
+          // Not authenticated, redirect to admin login
+          window.location.href = "/admin";
+
+          return;
+        }
+
         const data = await response.json();
 
         setContributions(data.contributions ?? []);
