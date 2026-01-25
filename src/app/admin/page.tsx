@@ -359,34 +359,34 @@ export default function AdminPage() {
     <div className="min-h-screen bg-slate-50">
       {/* Header */}
       <header className="sticky top-0 z-10 border-b bg-white">
-        <div className="container mx-auto flex items-center justify-between px-4 py-4 md:px-6">
-          <div className="flex items-center gap-4">
+        <div className="container mx-auto flex flex-col items-center px-4 py-4 md:flex-row md:justify-between md:px-6">
+          <div className="flex w-full items-center justify-between gap-4 md:justify-start">
             <h1 className="text-lg font-semibold">Administration</h1>
             <Badge variant="secondary">{gifts.length} cadeaux</Badge>
           </div>
-          <div className="flex items-center gap-2">
+          <div className="flex w-full items-end justify-end gap-2 md:w-auto md:items-center">
             <Link href="/">
               <Button variant="outline" size="sm">
-                <Home className="mr-2 h-4 w-4" />
-                Voir le site
+                <Home className="h-4 w-4" />
+                <span className="ml-2 hidden md:inline">Voir le site</span>
               </Button>
             </Link>
             <Link href="/admin/contributions">
               <Button variant="outline" size="sm">
-                <Users className="mr-2 h-4 w-4" />
-                Contributions
+                <Users className="h-4 w-4" />
+                <span className="ml-2 hidden md:inline">Contributions</span>
               </Button>
             </Link>
             <Button variant="ghost" size="sm" onClick={handleLogout}>
-              <LogOut className="mr-2 h-4 w-4" />
-              Déconnexion
+              <LogOut className="h-4 w-4" />
+              <span className="ml-2 hidden md:inline">Déconnexion</span>
             </Button>
           </div>
         </div>
       </header>
 
       {/* Content */}
-      <main className="container mx-auto py-8">
+      <main className="container mx-auto px-4 py-8 md:px-6">
         {/* Top section: title + add button */}
         <div className="mb-6 flex items-center justify-between">
           <h2 className="text-xl font-semibold">Mes cadeaux</h2>
