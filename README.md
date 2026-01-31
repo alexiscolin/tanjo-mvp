@@ -73,10 +73,12 @@ ID | Nom | Description | Prix | Image | Catégorie | Lien | Cagnotte | Montant C
 **Sheet "Contributions"**:
 
 ```
-ID | ID Cadeau | Nom | Email | Montant | Message | Date | CancelToken
+ID | ID Cadeau | Nom | Email | Montant | Message | Date | CancelToken | Payé
 ```
 
 > 💡 **Note**: The `CancelToken` column is automatically generated. It contains a secure token allowing contributors to cancel their contribution via a unique link.
+>
+> **Payé** (column I): Used to track whether payment has been received (outside the platform). Set to `OUI` or `NON`. You can toggle it from the admin contributions page; new contributions default to `NON`.
 
 ---
 

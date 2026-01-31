@@ -186,7 +186,7 @@ export async function getGifts(): Promise<Gift[]> {
   // Use batchGet to fetch both ranges in a single API call (much faster!)
   const batchResponse = await sheets.spreadsheets.values.batchGet({
     spreadsheetId: SPREADSHEET_ID,
-    ranges: [`${SHEETS.GIFTS}!A2:O`, `${SHEETS.CONTRIBUTIONS}!A2:H`],
+    ranges: [`${SHEETS.GIFTS}!A2:O`, `${SHEETS.CONTRIBUTIONS}!A2:I`],
   });
 
   const giftsRows = batchResponse.data.valueRanges?.[0]?.values ?? [];
@@ -207,6 +207,7 @@ export async function getGifts(): Promise<Gift[]> {
         message: row[5] ?? undefined,
         createdAt: row[6] ?? new Date().toISOString(),
         cancelToken: row[7] ?? undefined,
+        paid: row[8]?.toString().toLowerCase() === "oui",
       };
 
       if (!contributionsByGiftId[contribution.giftId]) {
@@ -473,7 +474,7 @@ export async function getContributions(giftId?: string): Promise<Contribution[]>
 
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.CONTRIBUTIONS}!A2:H`, // Extended to include cancelToken (column H)
+    range: `${SHEETS.CONTRIBUTIONS}!A2:I`, // H = CancelToken, I = Payé
   });
 
   const rows = response.data.values ?? [];
@@ -490,6 +491,7 @@ export async function getContributions(giftId?: string): Promise<Contribution[]>
         message: row[5] ?? undefined,
         createdAt: row[6] ?? new Date().toISOString(),
         cancelToken: row[7] ?? undefined,
+        paid: row[8]?.toString().toLowerCase() === "oui",
       })
     );
 
@@ -510,6 +512,35 @@ export async function getContributionByCancelToken(
   const contributions = await getContributions();
 
   return contributions.find((c) => c.cancelToken === cancelToken) ?? null;
+}
+
+/**
+ * Update the paid status of a contribution (column I).
+ * Used when payment is received outside the platform.
+ */
+export async function updateContributionPaid(id: string, paid: boolean): Promise<void> {
+  const sheets = getSheets();
+
+  const response = await sheets.spreadsheets.values.get({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.CONTRIBUTIONS}!A2:I`,
+  });
+
+  const rows = response.data.values ?? [];
+  const rowIndex = rows.findIndex((row) => row[0] === id);
+
+  if (rowIndex === -1) throw new Error("Contribution not found");
+
+  const row = rowIndex + 2; // +2 for header + 0-based index
+
+  await sheets.spreadsheets.values.update({
+    spreadsheetId: SPREADSHEET_ID,
+    range: `${SHEETS.CONTRIBUTIONS}!I${row}:I${row}`,
+    valueInputOption: "USER_ENTERED",
+    requestBody: {
+      values: [[paid ? "OUI" : "NON"]],
+    },
+  });
 }
 
 export interface AddContributionResult {
@@ -535,6 +566,7 @@ export async function addContribution(
     sanitizeValue(contribution.message ?? ""),
     createdAt,
     cancelToken,
+    "NON", // Payé (payment tracked manually off-platform)
   ];
 
   // 1. Find the last row that contains any data (read A:Z to catch misaligned data)
@@ -568,10 +600,10 @@ export async function addContribution(
     },
   });
 
-  // 4. Write values to A:H of the newly created row
+  // 4. Write values to A:I of the newly created row
   await sheets.spreadsheets.values.update({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.CONTRIBUTIONS}!A${insertRow}:H${insertRow}`,
+    range: `${SHEETS.CONTRIBUTIONS}!A${insertRow}:I${insertRow}`,
     valueInputOption: "USER_ENTERED",
     requestBody: {
       values: [sanitizedValues],
@@ -606,7 +638,7 @@ export async function deleteContribution(id: string): Promise<Contribution> {
   // Get all rows including empty ones to find the exact row index
   const response = await sheets.spreadsheets.values.get({
     spreadsheetId: SPREADSHEET_ID,
-    range: `${SHEETS.CONTRIBUTIONS}!A2:H`,
+    range: `${SHEETS.CONTRIBUTIONS}!A2:I`,
   });
 
   const rows = response.data.values ?? [];
@@ -625,6 +657,7 @@ export async function deleteContribution(id: string): Promise<Contribution> {
     message: rowData[5] ?? undefined,
     createdAt: rowData[6] ?? new Date().toISOString(),
     cancelToken: rowData[7] ?? undefined,
+    paid: rowData[8]?.toString().toLowerCase() === "oui",
   };
 
   const row = rowIndex + 2; // +2 because of header (line 1) + index 0
@@ -685,7 +718,7 @@ export async function getGiftsAndListInfo(): Promise<{ gifts: Gift[]; listInfo: 
   // Fetch all required data in a single batch API call (3 ranges at once)
   const batchResponse = await sheets.spreadsheets.values.batchGet({
     spreadsheetId: SPREADSHEET_ID,
-    ranges: [`${SHEETS.GIFTS}!A2:O`, `${SHEETS.CONTRIBUTIONS}!A2:H`, `${SHEETS.CONFIG}!B1:B8`],
+    ranges: [`${SHEETS.GIFTS}!A2:O`, `${SHEETS.CONTRIBUTIONS}!A2:I`, `${SHEETS.CONFIG}!B1:B8`],
   });
 
   const giftsRows = batchResponse.data.valueRanges?.[0]?.values ?? [];
@@ -707,6 +740,7 @@ export async function getGiftsAndListInfo(): Promise<{ gifts: Gift[]; listInfo: 
         message: row[5] ?? undefined,
         createdAt: row[6] ?? new Date().toISOString(),
         cancelToken: row[7] ?? undefined,
+        paid: row[8]?.toString().toLowerCase() === "oui",
       };
 
       if (!contributionsByGiftId[contribution.giftId]) {

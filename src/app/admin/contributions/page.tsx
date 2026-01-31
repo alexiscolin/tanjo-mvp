@@ -6,6 +6,7 @@ import { ArrowLeft, Search, Users, TrendingUp, DollarSign, Loader2 } from "lucid
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Switch } from "@/components/ui/switch";
 import { formatJpy } from "@/lib/currency";
 
 interface EnrichedContribution {
@@ -17,6 +18,7 @@ interface EnrichedContribution {
   amount: number;
   message: string;
   createdAt: string;
+  paid?: boolean;
 }
 
 export default function ContributionsPage() {
@@ -24,6 +26,7 @@ export default function ContributionsPage() {
   const [searchTerm, setSearchTerm] = useState("");
   const [selectedGift, setSelectedGift] = useState<string>("all");
   const [isLoading, setIsLoading] = useState(true);
+  const [updatingPaidId, setUpdatingPaidId] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchData = async () => {
@@ -75,6 +78,25 @@ export default function ContributionsPage() {
 
     return filtered;
   }, [searchTerm, selectedGift, contributions]);
+
+  const setContributionPaid = async (id: string, paid: boolean) => {
+    setUpdatingPaidId(id);
+    try {
+      const res = await fetch(`/api/contributions/${id}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        credentials: "include",
+        body: JSON.stringify({ paid }),
+      });
+
+      if (!res.ok) throw new Error("Update failed");
+      setContributions((prev) => prev.map((c) => (c.id === id ? { ...c, paid } : c)));
+    } catch (err) {
+      console.error("Error updating paid status:", err);
+    } finally {
+      setUpdatingPaidId(null);
+    }
+  };
 
   // Calculate statistics
   const totalAmount = contributions.reduce((sum, c) => sum + c.amount, 0);
@@ -195,12 +217,13 @@ export default function ContributionsPage() {
                   <th className="px-4 py-3 text-left text-sm font-semibold">Cadeau</th>
                   <th className="px-4 py-3 text-right text-sm font-semibold">Montant</th>
                   <th className="px-4 py-3 text-left text-sm font-semibold">Message</th>
+                  <th className="px-4 py-3 text-center text-sm font-semibold">Payé</th>
                 </tr>
               </thead>
               <tbody className="divide-y">
                 {filteredContributions.length === 0 ? (
                   <tr>
-                    <td colSpan={6} className="text-muted-foreground px-4 py-8 text-center">
+                    <td colSpan={7} className="text-muted-foreground px-4 py-8 text-center">
                       {searchTerm || selectedGift !== "all"
                         ? "Aucune contribution trouvée avec ces filtres"
                         : "Aucune contribution pour le moment"}
@@ -224,6 +247,17 @@ export default function ContributionsPage() {
                       </td>
                       <td className="text-muted-foreground max-w-xs truncate px-4 py-3 text-sm">
                         {contrib.message || "-"}
+                      </td>
+                      <td className="px-4 py-3 text-center">
+                        {updatingPaidId === contrib.id ? (
+                          <Loader2 className="text-muted-foreground mx-auto h-5 w-5 animate-spin" />
+                        ) : (
+                          <Switch
+                            checked={contrib.paid ?? false}
+                            onCheckedChange={(checked) => setContributionPaid(contrib.id, checked)}
+                            aria-label={contrib.paid ? "Marquer non payé" : "Marquer payé"}
+                          />
+                        )}
                       </td>
                     </tr>
                   ))

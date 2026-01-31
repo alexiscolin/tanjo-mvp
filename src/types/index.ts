@@ -40,6 +40,7 @@ export interface Contribution {
   message?: string;
   createdAt: string;
   cancelToken?: string; // secure token for cancellation link
+  paid?: boolean; // payment received (tracked manually, payment is off-platform)
 }
 
 /**
