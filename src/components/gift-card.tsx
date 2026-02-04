@@ -95,7 +95,7 @@ export function GiftCard({
         </div>
 
         {/* Occasion badge */}
-        {gift.isOccasion && !isDisabled && (
+        {gift.isOccasion && (
           <div className="absolute top-2 right-2">
             <Badge className="bg-accent-gold border-0 px-2 py-1 text-xs text-white">Occasion</Badge>
           </div>
@@ -103,43 +103,51 @@ export function GiftCard({
 
         {/* Action buttons on image */}
         {!isDisabled && (
-          <>
-            {/* Reserve/Contribute button - bottom left */}
-            <div className="absolute bottom-3 left-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-              <button
-                className="bg-dark hover:bg-dark/90 flex cursor-pointer items-center gap-2 rounded-full px-4 py-3 text-white shadow-lg transition-colors"
-                aria-label={gift.isPot ? "Participer" : "Confirmer et payer"}
-              >
-                {gift.isPot ? (
-                  <>
-                    <HandHeart className="h-5 w-5" />
-                    <span className="text-sm font-medium">Participer</span>
-                  </>
-                ) : (
-                  <>
-                    <Gift className="h-5 w-5" />
-                    <span className="text-sm font-medium">Offrir</span>
-                  </>
-                )}
-              </button>
-            </div>
+          <div className="absolute bottom-3 left-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
+            <button
+              type="button"
+              className="bg-dark hover:bg-dark/90 flex cursor-pointer items-center gap-2 rounded-full px-4 py-3 text-white shadow-lg transition-colors"
+              aria-label={gift.isPot ? "Participer" : "Confirmer et payer"}
+              onClick={(e) => {
+                e.stopPropagation();
+                if (gift.isPot) onContribute?.(gift);
+                else onReserve?.(gift);
+              }}
+            >
+              {gift.isPot ? (
+                <>
+                  <HandHeart className="h-5 w-5" />
+                  <span className="text-sm font-medium">Participer</span>
+                </>
+              ) : (
+                <>
+                  <Gift className="h-5 w-5" />
+                  <span className="text-sm font-medium">Offrir</span>
+                </>
+              )}
+            </button>
+          </div>
+        )}
 
-            {/* External link - bottom right */}
-            {gift.externalUrl && (
-              <div className="absolute right-3 bottom-3 opacity-0 transition-opacity duration-300 group-hover:opacity-100">
-                <a
-                  href={gift.externalUrl}
-                  target="_blank"
-                  rel="noopener noreferrer"
-                  onClick={(e) => e.stopPropagation()}
-                  className="bg-surface text-dark hover:bg-surface/90 flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-colors"
-                  aria-label="Voir le produit"
-                >
-                  <ExternalLink className="h-5 w-5" />
-                </a>
-              </div>
+        {/* External link - bottom right */}
+        {gift.externalUrl && (
+          <div
+            className={cn(
+              "absolute right-3 bottom-3",
+              !isDisabled && "opacity-0 transition-opacity duration-300 group-hover:opacity-100"
             )}
-          </>
+          >
+            <a
+              href={gift.externalUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              onClick={(e) => e.stopPropagation()}
+              className="bg-surface text-dark hover:bg-surface/90 flex h-12 w-12 items-center justify-center rounded-full shadow-lg transition-colors"
+              aria-label="Voir le produit"
+            >
+              <ExternalLink className="h-5 w-5" />
+            </a>
+          </div>
         )}
       </div>
 
