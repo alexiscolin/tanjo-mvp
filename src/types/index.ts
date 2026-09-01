@@ -44,6 +44,27 @@ export interface Contribution {
 }
 
 /**
+ * Contribution as exposed to unauthenticated visitors.
+ *
+ * ⚠️ SECURITY: never widen this type. `email` is personal data, and `cancelToken`
+ * is the bearer secret for DELETE /api/cancel/[token] — leaking it lets anyone
+ * cancel anyone else's contribution. Build it with `toPublicContributor()`.
+ */
+export type PublicContributor = Pick<
+  Contribution,
+  "id" | "name" | "amount" | "message" | "createdAt"
+>;
+
+/**
+ * Gift as exposed to unauthenticated visitors: contributors are stripped of
+ * their email/cancelToken, and the reserver's email is dropped entirely.
+ * Build it with `toPublicGift()`.
+ */
+export type PublicGift = Omit<Gift, "contributors" | "reservedEmail"> & {
+  contributors?: PublicContributor[];
+};
+
+/**
  * Category labels without emojis - icons will be rendered separately
  * This is the single source of truth for categories
  */

@@ -1,7 +1,13 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { getExchangeRates } from "@/lib/currency";
-import { addContribution, getGifts, getContributions, getPaymentConfig } from "@/lib/google-sheets";
+import {
+  addContribution,
+  getGifts,
+  getContributions,
+  getPaymentConfig,
+  toPublicContributor,
+} from "@/lib/google-sheets";
 import {
   sendContributionConfirmationEmail,
   sendContributionNotificationToAdmin,
@@ -14,14 +20,8 @@ export async function GET(request: NextRequest, { params }: { params: Promise<{ 
     const { id } = await params;
     const contributions = await getContributions(id);
 
-    // Return anonymized data (hide email for privacy)
-    const anonymizedContributions = contributions.map((c) => ({
-      id: c.id,
-      name: c.name,
-      amount: c.amount,
-      message: c.message,
-      createdAt: c.createdAt,
-    }));
+    // Return anonymized data (hides email + cancelToken)
+    const anonymizedContributions = contributions.map(toPublicContributor);
 
     return NextResponse.json({ contributions: anonymizedContributions });
   } catch (error) {

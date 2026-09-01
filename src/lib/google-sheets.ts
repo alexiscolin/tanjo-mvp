@@ -1,7 +1,15 @@
 /* eslint-disable max-lines */
 import crypto from "crypto";
 import { google } from "googleapis";
-import type { Gift, Contribution, ListInfo, AppConfig, PaymentConfig } from "@/types";
+import type {
+  Gift,
+  Contribution,
+  PublicContributor,
+  PublicGift,
+  ListInfo,
+  AppConfig,
+  PaymentConfig,
+} from "@/types";
 import { DEFAULT_CONFIG } from "./constants";
 
 /**
@@ -241,6 +249,59 @@ export async function getGifts(): Promise<Gift[]> {
       isOccasion: row[13]?.toLowerCase() === "oui",
     };
   });
+}
+
+/**
+ * Project a contribution onto the fields safe to serve to anonymous visitors.
+ *
+ * ⚠️ SECURITY: drops `email` (personal data) and `cancelToken` (bearer secret for
+ * DELETE /api/cancel/[token]). Written as an explicit field list rather than a
+ * destructuring rest so that any new sensitive column added to the Contributions
+ * sheet stays private by default instead of leaking silently.
+ */
+export function toPublicContributor(contribution: Contribution): PublicContributor {
+  return {
+    id: contribution.id,
+    name: contribution.name,
+    amount: contribution.amount,
+    message: contribution.message,
+    createdAt: contribution.createdAt,
+  };
+}
+
+/**
+ * Project a gift onto the fields safe to serve to anonymous visitors.
+ * Strips the reserver's email and anonymizes every contributor.
+ */
+export function toPublicGift(gift: Gift): PublicGift {
+  const { reservedEmail: _reservedEmail, contributors, ...rest } = gift;
+
+  return {
+    ...rest,
+    contributors: contributors?.map(toPublicContributor),
+  };
+}
+
+/**
+ * Anonymized variant of getGifts() for unauthenticated endpoints.
+ * Public routes MUST use this rather than getGifts().
+ */
+export async function getPublicGifts(): Promise<PublicGift[]> {
+  const gifts = await getGifts();
+
+  return gifts.map(toPublicGift);
+}
+
+/**
+ * Anonymized variant of getGiftsAndListInfo() for unauthenticated endpoints.
+ */
+export async function getPublicGiftsAndListInfo(): Promise<{
+  gifts: PublicGift[];
+  listInfo: ListInfo;
+}> {
+  const { gifts, listInfo } = await getGiftsAndListInfo();
+
+  return { gifts: gifts.map(toPublicGift), listInfo };
 }
 
 export async function addGift(

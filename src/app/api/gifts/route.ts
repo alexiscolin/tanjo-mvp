@@ -1,12 +1,13 @@
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { verifySession } from "@/lib/auth";
-import { getGiftsAndListInfo, addGift } from "@/lib/google-sheets";
+import { getPublicGiftsAndListInfo, addGift } from "@/lib/google-sheets";
 
 // GET /api/gifts - Fetch all gifts
 export async function GET() {
   try {
-    const { gifts, listInfo } = await getGiftsAndListInfo();
+    // ⚠️ SECURITY: public endpoint — getPublicGiftsAndListInfo(), never getGiftsAndListInfo().
+    const { gifts, listInfo } = await getPublicGiftsAndListInfo();
 
     // Filter empty rows
     const validGifts = gifts.filter((g) => g.title?.trim() !== "");

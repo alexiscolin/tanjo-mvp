@@ -2,7 +2,12 @@ import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
 import { POOL_ID } from "@/lib/constants";
 import { getExchangeRates } from "@/lib/currency";
-import { addContribution, getContributions, getPaymentConfig } from "@/lib/google-sheets";
+import {
+  addContribution,
+  getContributions,
+  getPaymentConfig,
+  toPublicContributor,
+} from "@/lib/google-sheets";
 import {
   sendContributionConfirmationEmail,
   sendContributionNotificationToAdmin,
@@ -14,14 +19,8 @@ export async function GET() {
   try {
     const contributions = await getContributions(POOL_ID);
 
-    // Return anonymized data (hide email for privacy)
-    const anonymizedContributions = contributions.map((c) => ({
-      id: c.id,
-      name: c.name,
-      amount: c.amount,
-      message: c.message,
-      createdAt: c.createdAt,
-    }));
+    // Return anonymized data (hides email + cancelToken)
+    const anonymizedContributions = contributions.map(toPublicContributor);
 
     return NextResponse.json({ contributions: anonymizedContributions });
   } catch (error) {

@@ -5,7 +5,7 @@ import { Badge } from "@/components/ui/badge";
 import { Card, CardContent } from "@/components/ui/card";
 import { type Currency, type ExchangeRates, formatCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
-import type { Gift as GiftType } from "@/types";
+import type { PublicGift as GiftType } from "@/types";
 import { categoryLabels, categoryIcons } from "@/types";
 import { ContributorsProgress } from "./contributors-progress";
 
