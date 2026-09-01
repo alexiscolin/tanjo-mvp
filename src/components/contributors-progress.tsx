@@ -3,12 +3,12 @@
 import { useState } from "react";
 import { type Currency, type ExchangeRates, formatCurrency } from "@/lib/currency";
 import { cn } from "@/lib/utils";
-import { type Contribution } from "@/types";
+import { type PublicContributor } from "@/types";
 
 interface ContributorsProgressProps {
   currentAmount: number;
   goalAmount?: number; // Optional - if provided, shows "X / Y €"
-  contributors: Contribution[];
+  contributors: PublicContributor[];
   selectedCurrency: Currency;
   exchangeRates: ExchangeRates;
   variant?: "default" | "inverted"; // default = dark text, inverted = white text

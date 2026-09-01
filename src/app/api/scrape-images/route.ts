@@ -1,5 +1,130 @@
+import dns from "dns/promises";
+import net from "net";
 import type { NextRequest } from "next/server";
 import { NextResponse } from "next/server";
+import { verifySession } from "@/lib/auth";
+
+const MAX_REDIRECTS = 3;
+const FETCH_TIMEOUT_MS = 10000;
+
+/**
+ * Reject addresses that are not routable on the public internet.
+ * Blocks loopback, RFC1918, carrier-grade NAT, and — critically — the
+ * 169.254.0.0/16 link-local range that carries cloud instance metadata.
+ */
+function isPrivateAddress(ip: string): boolean {
+  const version = net.isIP(ip);
+
+  if (version === 4) {
+    const [a, b] = ip.split(".").map(Number);
+
+    return (
+      a === 0 || // 0.0.0.0/8
+      a === 10 || // 10.0.0.0/8 private
+      a === 127 || // 127.0.0.0/8 loopback
+      (a === 100 && b >= 64 && b <= 127) || // 100.64.0.0/10 CGNAT
+      (a === 169 && b === 254) || // 169.254.0.0/16 link-local (cloud metadata)
+      (a === 172 && b >= 16 && b <= 31) || // 172.16.0.0/12 private
+      (a === 192 && b === 168) || // 192.168.0.0/16 private
+      (a === 192 && b === 0) || // 192.0.0.0/24 IETF protocol assignments
+      (a === 198 && (b === 18 || b === 19)) || // 198.18.0.0/15 benchmarking
+      a >= 224 // multicast + reserved
+    );
+  }
+
+  if (version === 6) {
+    const normalized = ip.toLowerCase();
+
+    // IPv4-mapped (::ffff:10.0.0.1) must be judged on its IPv4 value
+    const mapped = /^::ffff:(\d+\.\d+\.\d+\.\d+)$/.exec(normalized);
+
+    if (mapped) return isPrivateAddress(mapped[1]);
+
+    return (
+      normalized === "::" ||
+      normalized === "::1" || // loopback
+      normalized.startsWith("fc") || // fc00::/7 unique local
+      normalized.startsWith("fd") ||
+      normalized.startsWith("fe8") || // fe80::/10 link-local
+      normalized.startsWith("fe9") ||
+      normalized.startsWith("fea") ||
+      normalized.startsWith("feb") ||
+      normalized.startsWith("ff") // multicast
+    );
+  }
+
+  return true; // unparseable: refuse
+}
+
+/**
+ * Validate a candidate URL against SSRF: http(s) only, and every address the
+ * hostname resolves to must be publicly routable. Resolving all records (rather
+ * than trusting the literal) blocks hostnames that point at internal space.
+ */
+async function assertPublicHttpUrl(raw: string): Promise<URL> {
+  let parsed: URL;
+
+  try {
+    parsed = new URL(raw);
+  } catch {
+    throw new Error("URL invalide");
+  }
+
+  if (parsed.protocol !== "http:" && parsed.protocol !== "https:") {
+    throw new Error("Seules les URLs http(s) sont autorisées");
+  }
+
+  const hostname = parsed.hostname.replace(/^\[|\]$/g, "");
+
+  if (net.isIP(hostname)) {
+    if (isPrivateAddress(hostname)) throw new Error("Adresse non autorisée");
+
+    return parsed;
+  }
+
+  let addresses: { address: string }[];
+
+  try {
+    addresses = await dns.lookup(hostname, { all: true });
+  } catch {
+    throw new Error("Hôte introuvable");
+  }
+
+  if (addresses.length === 0 || addresses.some((a) => isPrivateAddress(a.address))) {
+    throw new Error("Adresse non autorisée");
+  }
+
+  return parsed;
+}
+
+/**
+ * Fetch following redirects manually, re-validating every hop. Automatic
+ * redirect following would let a public URL bounce the request into private
+ * space, defeating the check on the initial URL.
+ */
+async function safeFetch(startUrl: string, headers: Record<string, string>): Promise<Response> {
+  let current = startUrl;
+
+  for (let hop = 0; hop <= MAX_REDIRECTS; hop++) {
+    await assertPublicHttpUrl(current);
+
+    const response = await fetch(current, {
+      headers,
+      redirect: "manual",
+      signal: AbortSignal.timeout(FETCH_TIMEOUT_MS),
+    });
+
+    if (response.status < 300 || response.status >= 400) return response;
+
+    const location = response.headers.get("location");
+
+    if (!location) return response;
+
+    current = new URL(location, current).href;
+  }
+
+  throw new Error("Trop de redirections");
+}
 
 // Common image extensions
 const IMAGE_EXTENSIONS = [".jpg", ".jpeg", ".png", ".gif", ".webp", ".avif", ".svg"];
@@ -113,6 +238,13 @@ function extractImagesFromHtml(html: string, baseUrl: string): string[] {
 }
 
 export async function POST(request: NextRequest) {
+  // ⚠️ SECURITY: this endpoint makes the server fetch an attacker-supplied URL.
+  // It only ever backs the admin image picker, so it requires a session — an
+  // anonymous caller must not be able to use the server as an HTTP proxy.
+  if (!verifySession(request)) {
+    return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+  }
+
   try {
     const { url } = await request.json();
 
@@ -120,13 +252,16 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: "URL requise" }, { status: 400 });
     }
 
-    // Validate URL
+    // Validate scheme + resolved addresses before any outbound request
     let parsedUrl: URL;
 
     try {
-      parsedUrl = new URL(url);
-    } catch {
-      return NextResponse.json({ error: "URL invalide" }, { status: 400 });
+      parsedUrl = await assertPublicHttpUrl(url);
+    } catch (error) {
+      return NextResponse.json(
+        { error: error instanceof Error ? error.message : "URL invalide" },
+        { status: 400 }
+      );
     }
 
     // Check if it's a direct image URL
@@ -137,15 +272,12 @@ export async function POST(request: NextRequest) {
       });
     }
 
-    // Fetch the page (10 second timeout)
-    const response = await fetch(url, {
-      headers: {
-        "User-Agent":
-          "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
-        Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
-        "Accept-Language": "en-US,en;q=0.5",
-      },
-      signal: AbortSignal.timeout(10000),
+    // Fetch the page, re-validating each redirect hop (10 second timeout)
+    const response = await safeFetch(url, {
+      "User-Agent":
+        "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml,application/xml;q=0.9,image/webp,*/*;q=0.8",
+      "Accept-Language": "en-US,en;q=0.5",
     });
 
     if (!response.ok) {

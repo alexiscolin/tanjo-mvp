@@ -3,13 +3,13 @@
 import { HandHeart } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { type Currency, type ExchangeRates } from "@/lib/currency";
-import { type Contribution } from "@/types";
+import { type PublicContributor } from "@/types";
 import { ContributorsProgress } from "./contributors-progress";
 
 interface FreeContributionCardProps {
   title: string;
   totalAmount: number;
-  contributors: Contribution[];
+  contributors: PublicContributor[];
   onContribute: () => void;
   selectedCurrency: Currency;
   exchangeRates: ExchangeRates;

@@ -1,6 +1,6 @@
 import { NextResponse } from "next/server";
 import { getExchangeRates } from "@/lib/currency";
-import { getGifts, getListInfo } from "@/lib/google-sheets";
+import { getPublicGifts, getListInfo } from "@/lib/google-sheets";
 
 /**
  * Registry API - Fetch all registry data in one call
@@ -11,8 +11,9 @@ import { getGifts, getListInfo } from "@/lib/google-sheets";
  */
 export async function GET() {
   try {
+    // ⚠️ SECURITY: public endpoint — getPublicGifts(), never getGifts().
     const [gifts, listInfo, rates] = await Promise.all([
-      getGifts(),
+      getPublicGifts(),
       getListInfo(),
       getExchangeRates(),
     ]);

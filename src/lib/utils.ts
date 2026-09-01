@@ -29,7 +29,10 @@ export interface GiftFilterOptions {
  * @param options - Filter options
  * @returns Filtered array of gifts
  */
-export function filterGifts(gifts: Gift[], options: GiftFilterOptions = {}): Gift[] {
+export function filterGifts<T extends Pick<Gift, "id" | "category" | "isOccasion" | "isReserved">>(
+  gifts: T[],
+  options: GiftFilterOptions = {}
+): T[] {
   const {
     category = "all",
     showOccasionOnly = false,

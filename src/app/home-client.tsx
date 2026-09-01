@@ -17,7 +17,7 @@ import { POOL_ID } from "@/lib/constants";
 import { type Currency, type ExchangeRates, detectPreferredCurrency } from "@/lib/currency";
 import { filterGifts } from "@/lib/utils";
 import { categoryLabels, allCategories, categoryIcons } from "@/types";
-import type { Gift, GiftCategory, ListInfo, Contribution } from "@/types";
+import type { PublicGift, GiftCategory, ListInfo, PublicContributor } from "@/types";
 import type { Masonry as MasonryType } from "masonic";
 
 // Masonry uses ResizeObserver (no SSR)
@@ -26,13 +26,13 @@ const Masonry = dynamic(() => import("masonic").then((mod) => mod.Masonry), {
 }) as typeof MasonryType;
 
 export function HomeClient() {
-  const [gifts, setGifts] = useState<Gift[]>([]);
+  const [gifts, setGifts] = useState<PublicGift[]>([]);
   const [listInfo, setListInfo] = useState<ListInfo | null>(null);
   const [exchangeRates, setExchangeRates] = useState<ExchangeRates>({ EUR: 0.00625, USD: 0.0069 });
   const [isLoading, setIsLoading] = useState(true);
   const [selectedCategory, setSelectedCategory] = useState<GiftCategory | "all">("all");
-  const [reserveGift, setReserveGift] = useState<Gift | null>(null);
-  const [contributeGift, setContributeGift] = useState<Gift | null>(null);
+  const [reserveGift, setReserveGift] = useState<PublicGift | null>(null);
+  const [contributeGift, setContributeGift] = useState<PublicGift | null>(null);
   const [selectedCurrency, setSelectedCurrency] = useState<Currency>("JPY");
   const [showOccasionOnly, setShowOccasionOnly] = useState(false);
   const [showAvailableOnly, setShowAvailableOnly] = useState(false);
@@ -124,11 +124,11 @@ export function HomeClient() {
   interface FreeContributionData {
     title: string;
     totalAmount: number;
-    contributors: Contribution[];
+    contributors: PublicContributor[];
   }
   type MasonryItem =
     | { type: "free-contribution"; id: string; data: FreeContributionData }
-    | { type: "gift"; id: string; data: Gift };
+    | { type: "gift"; id: string; data: PublicGift };
 
   // Prepare items for masonry
   const masonryItems = useMemo((): MasonryItem[] => {
@@ -171,7 +171,7 @@ export function HomeClient() {
             totalAmount={item.data.totalAmount}
             contributors={item.data.contributors}
             onContribute={() => {
-              const fakeGift: Gift = {
+              const fakeGift: PublicGift = {
                 id: POOL_ID,
                 title: item.data.title,
                 description: "Montant libre pour nous aider",

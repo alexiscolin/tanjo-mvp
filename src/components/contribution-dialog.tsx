@@ -24,7 +24,7 @@ import {
   convertFromJpy,
   CURRENCY,
 } from "@/lib/currency";
-import type { Gift as GiftType, PaymentConfig } from "@/types";
+import type { PublicGift as GiftType, PaymentConfig } from "@/types";
 import { PaymentInstructions } from "./payment-instructions";
 
 interface ContributionDialogProps {
